@@ -38,6 +38,29 @@ With `OPENROUTER_REASONING=enabled` the model's thinking streams first, under `[
 Conversation memory lasts for the life of the process (`InMemorySaver`); `/reset` starts a
 fresh thread.
 
+## The graph
+
+A ReAct loop wired explicitly in `agent.py` — `agent` calls the model, `tools_condition`
+routes on whether the reply carried tool calls, and `ToolNode` runs them and hands control
+back. The cycle repeats until the model answers without calling a tool.
+
+```mermaid
+graph TD
+    start(["__start__"])
+    agent("agent")
+    tools("tools")
+    finish(["__end__"])
+
+    start --> agent
+    agent -. "tool calls present" .-> tools
+    agent -. "no tool calls" .-> finish
+    tools -- "ToolMessage appended" --> agent
+```
+
+State is `MessagesState`, so every node appends to one growing message list — which is why
+the reasoning round trip in `llm.py` matters: each trip around the loop resends the whole
+history, assistant messages included.
+
 ## Layout
 
 | File | Role |

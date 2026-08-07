@@ -67,10 +67,48 @@ history, assistant messages included.
 |---|---|
 | `config.py` | Environment → `Settings` |
 | `llm.py` | `ChatOpenRouter` — the model, plus the reasoning round trip below |
-| `tools/datetime_tools.py` | The one tool |
+| `arxiv_client.py` | arXiv HTTP, throttling, Atom parsing, formatting |
+| `tools/datetime_tools.py` | `get_current_datetime` |
+| `tools/arxiv_tools.py` | `search_arxiv`, `browse_arxiv`, `get_arxiv_paper` |
 | `tools/__init__.py` | `TOOLS` registry |
 | `agent.py` | The `StateGraph` |
 | `cli.py` | The REPL |
+
+## arXiv tools
+
+| Tool | For |
+|---|---|
+| `search_arxiv(query, category=, sort_by=, …)` | "what research exists on X" |
+| `browse_arxiv(category, year, month=, …)` | the `arxiv.org/list/cs.HC/2019-01` pattern |
+| `get_arxiv_paper(paper_ids)` | an identifier or a pasted `abs/` URL |
+
+All three go through the official API at `export.arxiv.org/api/query`, not the browse pages.
+Results carry real `arxiv.org/abs/` links, and the system prompt tells the model to cite those
+rather than recall papers from memory.
+
+Two things in `arxiv_client.py` are load-bearing:
+
+**The throttle.** arXiv's [terms of use](https://info.arxiv.org/help/api/tou.html) require no
+more than one request every three seconds on a single connection. A ReAct loop will fire
+several searches back to back, so the gap is enforced in `_throttle()` under a lock rather than
+trusted to callers. Expect a visible pause when the model chains two lookups.
+
+**Raw query encoding.** The API manual documents its examples pre-encoded — `ti:%22quantum
+theory%22`. That is only correct when hand-building a URL string. Handing those characters to
+an HTTP client double-encodes them to `%2522`, and arXiv does not error — it silently drops
+the phrase grouping:
+
+```
+ti:"attention is all you need"      ->      35 results
+ti:%22attention is all you need%22  -> 459,755 results
+```
+
+So queries are built as raw strings in a params dict and `httpx` does the encoding. "Fixing"
+them to match the manual re-breaks it invisibly.
+
+One honest caveat: `browse_arxiv` filters on *submission* date while the website's listing
+pages order by *announcement* date, so counts differ slightly at period boundaries — cs.HC for
+2019-01 is 62 here against the site's 64.
 
 ## Adding a tool
 

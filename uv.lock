@@ -661,6 +661,7 @@ name = "reserchia"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "httpx" },
     { name = "langchain-openai" },
     { name = "langgraph" },
     { name = "python-dotenv" },
@@ -668,6 +669,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "langchain-openai", specifier = ">=1.4.1" },
     { name = "langgraph", specifier = ">=1.2.10" },
     { name = "python-dotenv", specifier = ">=1.2.2" },

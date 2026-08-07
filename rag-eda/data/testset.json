@@ -1,0 +1,1190 @@
+[
+  {
+    "id": "hand-000",
+    "origin": "hand",
+    "category": "lexical",
+    "question": "What does PP-DocLayout-V3 do in the pipeline?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 1080,
+        "end": 1280
+      },
+      "html": {
+        "start": 1207,
+        "end": 1300
+      }
+    },
+    "gold_quote": "PP-DocLayout-V3 first performs layout analysis, followed by parallel region-level recognition",
+    "answerable": true
+  },
+  {
+    "id": "hand-001",
+    "origin": "hand",
+    "category": "lexical",
+    "question": "What is CogViT?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 600,
+        "end": 800
+      },
+      "html": {
+        "start": 672,
+        "end": 765
+      }
+    },
+    "gold_quote": "It combines a 0.4B-parameter CogViT visual encoder with a 0.5B-parameter GLM language decoder",
+    "answerable": true
+  },
+  {
+    "id": "hand-002",
+    "origin": "hand",
+    "category": "paraphrase",
+    "question": "How did they make the model generate output faster?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 840,
+        "end": 1040
+      },
+      "html": {
+        "start": 948,
+        "end": 1091
+      }
+    },
+    "gold_quote": "GLM-OCR introduces a Multi-Token Prediction (MTP) mechanism that predicts multiple tokens per step, significantly improving decoding throughput",
+    "answerable": true
+  },
+  {
+    "id": "hand-003",
+    "origin": "hand",
+    "category": "paraphrase",
+    "question": "Why is this language harder for OCR than English?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 360,
+        "end": 560
+      },
+      "html": {
+        "start": 236,
+        "end": 360
+      }
+    },
+    "gold_quote": "Thai presents additional challenges due to script complexity from non-latin letters, the absence of explicit word boundaries",
+    "answerable": true
+  },
+  {
+    "id": "hand-004",
+    "origin": "hand",
+    "category": "cross-paper",
+    "question": "Which of these models has 0.9 billion parameters?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 480,
+        "end": 680
+      },
+      "html": {
+        "start": 560,
+        "end": 670
+      }
+    },
+    "gold_quote": "GLM-OCR is an efficient 0.9B-parameter compact multimodal model designed for real-world document understanding",
+    "answerable": true
+  },
+  {
+    "id": "hand-005",
+    "origin": "hand",
+    "category": "cross-paper",
+    "question": "Which model targets Thai document extraction?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 600,
+        "end": 800
+      },
+      "html": {
+        "start": 484,
+        "end": 582
+      }
+    },
+    "gold_quote": "This paper presents Typhoon OCR, an open VLM for document extraction tailored for Thai and English",
+    "answerable": true
+  },
+  {
+    "id": "hand-006",
+    "origin": "hand",
+    "category": "cross-paper",
+    "question": "What happens in the reinforcement learning stage of training?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 18229,
+        "end": 18260
+      },
+      "html": {
+        "start": 15202,
+        "end": 15233
+      }
+    },
+    "gold_quote": "Stage 4: Reinforcement Learning",
+    "answerable": true
+  },
+  {
+    "id": "hand-007",
+    "origin": "hand",
+    "category": "cross-paper",
+    "question": "What is in stage 1 of the dataset creation pipeline?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 8969,
+        "end": 8994
+      },
+      "html": {
+        "start": 7779,
+        "end": 7804
+      }
+    },
+    "gold_quote": "Dataset Creation Pipeline",
+    "answerable": true
+  },
+  {
+    "id": "hand-008",
+    "origin": "hand",
+    "category": "numeric",
+    "question": "How does it score on OmniDocBench v1.5?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 7800,
+        "end": 8000
+      },
+      "html": {
+        "start": 5040,
+        "end": 5240
+      }
+    },
+    "gold_quote": "GLM-OCR achieves 94.6 on OmniDocBench v1.5 [24], ranking first among all evaluated models",
+    "answerable": true
+  },
+  {
+    "id": "hand-009",
+    "origin": "hand",
+    "category": "numeric",
+    "question": "Where can the 7B checkpoint be downloaded?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 1800,
+        "end": 2000
+      },
+      "html": {
+        "start": 1766,
+        "end": 1826
+      }
+    },
+    "gold_quote": "Typhoon OCR 7B: https://huggingface.co/scb10x/typhoon-ocr-7b",
+    "answerable": true
+  },
+  {
+    "id": "hand-010",
+    "origin": "hand",
+    "category": "negative",
+    "question": "What learning rate schedule does BERT use for pretraining?",
+    "paper": null,
+    "gold": null,
+    "answerable": false
+  },
+  {
+    "id": "hand-011",
+    "origin": "hand",
+    "category": "negative",
+    "question": "How much did the authors pay for their GPU cluster?",
+    "paper": null,
+    "gold": null,
+    "answerable": false
+  },
+  {
+    "id": "gen-000",
+    "origin": "generated",
+    "category": "generated",
+    "question": "Which model achieves the highest average BLEU score across all six document categories in the benchmark?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 30120,
+        "end": 30420
+      },
+      "html": {
+        "start": 28080,
+        "end": 28380
+      }
+    },
+    "gold_quote": "## Benchmark\n\nEvaluation is conducted on held-out test sets from Typhoon OCR V1, which are further refined through additional human annotation and quality control to reduce noise and improve consistency. In addition, two new evaluation sets are introduced to assess performance on document types that",
+    "answerable": true,
+    "shared_run": 1
+  },
+  {
+    "id": "gen-001",
+    "origin": "generated",
+    "category": "generated",
+    "question": "Which metrics were used to evaluate both lexical accuracy and structural similarity in the OCR system?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 17040,
+        "end": 17340
+      },
+      "html": {
+        "start": 15142,
+        "end": 15442
+      }
+    },
+    "gold_quote": "## Metrics\n\nWe evaluate Typhoon OCR using standard metrics from OCR and natural language generation (NLG) that capture complementary aspects of output quality. Lexical accuracy is assessed using BLEU (papineni-etal-2002-bleu), which measures $n$ -gram overlap between predicted and reference texts. S",
+    "answerable": true,
+    "shared_run": 2
+  },
+  {
+    "id": "gen-002",
+    "origin": "generated",
+    "category": "generated",
+    "question": "Which datasets supply the visual examples used in the second training stage for layout and figure comprehension?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 25560,
+        "end": 25860
+      },
+      "html": {
+        "start": 23782,
+        "end": 24082
+      }
+    },
+    "gold_quote": "## Stage 2\n\nVisual elements are sampled from SEA-VL Crawling777https://huggingface.co/datasets/SEACrowd/sea-vl_crawling (cahyawijaya2025crowdsourcecrawlgeneratecreating), which contains culturally relevant images from Southeast Asia, and from ChartCap888https://huggingface.co/datasets/junyoung-00/Ch",
+    "answerable": true,
+    "shared_run": 3
+  },
+  {
+    "id": "gen-003",
+    "origin": "generated",
+    "category": "generated",
+    "question": "Which metrics were used to evaluate Typhoon OCR V1.5, and what does each metric specifically measure?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 29760,
+        "end": 30060
+      },
+      "html": {
+        "start": 27734,
+        "end": 28034
+      }
+    },
+    "gold_quote": "## Protocol and Metrics\n\nWe evaluate Typhoon OCR V1.5 using the same metrics and protocols as V1 (Section 2.2.2) to ensure comparability across model iterations. Namely, we report BLEU, ROUGE-L, and Levenshtein distance to measure lexical accuracy, sequence-level structural similarity, and character",
+    "answerable": true,
+    "shared_run": 4
+  },
+  {
+    "id": "gen-004",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What limitations does the Typhoon OCR model face with degraded inputs, and what future directions are proposed to address them?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 33960,
+        "end": 34260
+      },
+      "html": {
+        "start": 31986,
+        "end": 32286
+      }
+    },
+    "gold_quote": "## 4 Conclusion\n\nThis report introduces Typhoon OCR, a family of VLMs designed to address limitations in document understanding for Thai. The models consistently show improvements over the base model across various document understanding tasks, including transcription accuracy, layout reconstruction",
+    "answerable": true,
+    "shared_run": 3
+  },
+  {
+    "id": "gen-005",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What specific capabilities beyond traditional text transcription does the proposed model offer for document understanding?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 7080,
+        "end": 7380
+      },
+      "html": {
+        "start": 5941,
+        "end": 6241
+      }
+    },
+    "gold_quote": "In this work, we present Typhoon OCR, an open VLM for end-to-end Thai and English document understanding. The model is capable of various visual-language capabilities, including text extraction, layout reconstruction, and document-level semantic modeling. Typhoon OCR is obtained by fine-tuning an op",
+    "answerable": true,
+    "shared_run": 3
+  },
+  {
+    "id": "gen-006",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What are the proportions of different document types in the training corpus, and what is the total number of samples?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 15360,
+        "end": 15660
+      },
+      "html": {
+        "start": 13575,
+        "end": 13875
+      }
+    },
+    "gold_quote": "Additional scanned documents and book pages are drawn from the olmOCR-mix-0225 collection333https://huggingface.co/datasets/allenai/olmOCR-mix-0225, contributing a combined 6.2% of the corpus. The remaining portion of the dataset comprises Thai InnovestX reports, financial infographics, and bills an",
+    "answerable": true,
+    "shared_run": 3
+  },
+  {
+    "id": "gen-007",
+    "origin": "generated",
+    "category": "generated",
+    "question": "Which organizations or teams are credited with supporting the development of Typhoon OCR?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 35880,
+        "end": 36180
+      },
+      "html": {
+        "start": 33881,
+        "end": 34181
+      }
+    },
+    "gold_quote": "## Acknowledgments\n\nBeyond the primary authors, we gratefully acknowledge the Typhoon Team members at SCB 10X whose contributions made this project possible: Adisai Na-Thalang, Chanakan Wittayasakpan, Kritsadha Phatcharoen, Tanawin Samutsin, Shah Faisal Wani, Sittipong Sripaisarnmongkol, Warit Siric",
+    "answerable": true,
+    "shared_run": 1
+  },
+  {
+    "id": "gen-008",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What are the two supervision modes used for training the OCR model, and how do they differ in terms of target document types and output formats?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 9000,
+        "end": 9300
+      },
+      "html": {
+        "start": 7770,
+        "end": 8070
+      }
+    },
+    "gold_quote": "## 2.1.1 Dataset Creation Pipeline\n\nFeature\n\nDefault Mode\n\nStructure Mode\n\nTarget Documents\n\nLoosely structured or unstructured documents, such as receipts, menus, tickets, infographics, and handwritten notes.\n\nHighly structured documents with complex layouts, including financial reports, academic p",
+    "answerable": true,
+    "shared_run": 3
+  },
+  {
+    "id": "gen-009",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What image resolution threshold and maximum token length were used during fine-tuning of the model?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 28560,
+        "end": 28860
+      },
+      "html": {
+        "start": 26640,
+        "end": 26940
+      }
+    },
+    "gold_quote": "## 3.2.1 Training\n\nTyphoon OCR V1.5 is trained using full-parameter SFT on the Qwen3-VL 2B VLM. The training framework is based on the open-source Axolotl framework131313https://github.com/axolotl-ai-cloud/axolotl (axolotl), with extensions to support long-context multimodal inputs and document-cent",
+    "answerable": true,
+    "shared_run": 2
+  },
+  {
+    "id": "gen-010",
+    "origin": "generated",
+    "category": "generated",
+    "question": "How was Thai-language visual question answering data generated for model training?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 24240,
+        "end": 24540
+      },
+      "html": {
+        "start": 22646,
+        "end": 22946
+      }
+    },
+    "gold_quote": "## Thai VQA\n\nThe Cauldron555https://huggingface.co/datasets/HuggingFaceM4/the_cauldron (laurençon2024matters), containing diverse visual question answering tasks covering object recognition, spatial reasoning, and basic document understanding, but is primarily available in English. To improve the mo",
+    "answerable": true,
+    "shared_run": 3
+  },
+  {
+    "id": "gen-011",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What input image width and maximum sequence length were used during fine-tuning of the Typhoon OCR models?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 15840,
+        "end": 16140
+      },
+      "html": {
+        "start": 14131,
+        "end": 14431
+      }
+    },
+    "gold_quote": "## 2.2.1 Training\n\nTyphoon OCR is trained using full-parameter supervised fine-tuning (SFT) on the Qwen2.5-VL model family (bai2025qwen25vltechnicalreport), covering both the 3B and 7B parameter variants. The training pipeline is based on the open-source olmOCR framework444https://github.com/allenai",
+    "answerable": true,
+    "shared_run": 3
+  },
+  {
+    "id": "gen-012",
+    "origin": "generated",
+    "category": "generated",
+    "question": "How do the Typhoon OCR models compare to GPT-4o and Gemini 2.5 Flash in terms of BLEU and Levenshtein scores across Thai financial reports, government forms, and books, and does the image-only input condition ever outperform the PDF-with-metadata condition for any Typhoon model?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 18240,
+        "end": 18540
+      },
+      "html": {
+        "start": 16366,
+        "end": 16666
+      }
+    },
+    "gold_quote": "## Protocol\n\nEvaluation is conducted under two input conditions to examine robustness across document representations. In the PDF with metadata setting, the model is provided with native PDF information, including text layers and layout annotations, when available. In the image-only setting, the mod",
+    "answerable": true,
+    "shared_run": 3
+  },
+  {
+    "id": "gen-013",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What specific factors explain why proprietary models like GPT and Gemini underperform on structured Thai document extraction tasks?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 5040,
+        "end": 5340
+      },
+      "html": {
+        "start": 3889,
+        "end": 4189
+      }
+    },
+    "gold_quote": "A primary factor underlying these limitations is Thai data scarcity. The development of large language models (LLMs) for Thai has highlighted the broader challenge of limited high-quality Thai training data; recent Thai LLMs such as the Typhoon series are explicitly designed and evaluated on Thai la",
+    "answerable": true,
+    "shared_run": 6
+  },
+  {
+    "id": "gen-014",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What design choice regarding image preprocessing improved training stability and evaluation performance for the Typhoon OCR model?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 19680,
+        "end": 19980
+      },
+      "html": {
+        "start": 17983,
+        "end": 18283
+      }
+    },
+    "gold_quote": "## 2.3 Results and Discussion\n\nSection 2.2.2 reports performance of Typhoon OCR (3B and 7B) relative to GPT-4o and Gemini 2.5 Flash across document categories. Typhoon OCR consistently outperforms baseline models on financial reports and government forms, which exhibit dense layouts and structured c",
+    "answerable": true,
+    "shared_run": 5
+  },
+  {
+    "id": "gen-015",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What specific shortcomings in the original Typhoon OCR system motivated the design changes in V1.5?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 21360,
+        "end": 21660
+      },
+      "html": {
+        "start": 19738,
+        "end": 20038
+      }
+    },
+    "gold_quote": "## 3 Typhoon OCR V1.5\n\nWhile Typhoon OCR has received a lot of positive feedback, post-deployment analysis of Typhoon OCR revealed some limitations that affect its usability and efficiency in real-world settings. First, dependence on PDF anchor metadata introduced increased inference latency, partic",
+    "answerable": true,
+    "shared_run": 2
+  },
+  {
+    "id": "gen-016",
+    "origin": "generated",
+    "category": "generated",
+    "question": "Why does Typhoon OCR V1.5 outperform its predecessor on structured Thai documents despite having a smaller model size?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 31560,
+        "end": 31860
+      },
+      "html": {
+        "start": 30400,
+        "end": 30700
+      }
+    },
+    "gold_quote": "## 3.3 Results and Discussion\n\nTables 3, 4 and 5 report a comparative evaluation of Typhoon OCR V1.5 against Typhoon OCR V1 and two frontier VLM baselines across multiple Thai document categories. We analyze performance trends in relation to model design and document characteristics. Across all metr",
+    "answerable": true,
+    "shared_run": 3
+  },
+  {
+    "id": "gen-017",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What changes were made to the data annotation process in the V1.5 version compared to the original, and what additional data sources were introduced to address specific limitations?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 22560,
+        "end": 22860
+      },
+      "html": {
+        "start": 20935,
+        "end": 21235
+      }
+    },
+    "gold_quote": "## 3.1.1 Dataset Creation Pipeline\n\nIn Typhoon OCR V1, dataset construction relied on separate mode strategies for different operating modes and on PDF anchor metadata for annotation. In V1.5, this design is simplified by adopting a single unified mode, eliminating the need for mode selection during",
+    "answerable": true,
+    "shared_run": 3
+  },
+  {
+    "id": "gen-018",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What are the relative proportions of the different data sources in the fine-tuning corpus, and which source is the largest?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 13320,
+        "end": 13620
+      },
+      "html": {
+        "start": 11707,
+        "end": 12007
+      }
+    },
+    "gold_quote": "## 2.1.2 Dataset Statistics\n\nFigure 3(a) summarizes the composition of the training corpus used to fine-tune Typhoon OCR. The dataset is curated from publicly available sources in both Thai and English and spans a wide range of document types, including infographics, government forms, financial repo",
+    "answerable": true,
+    "shared_run": 3
+  },
+  {
+    "id": "gen-019",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What specific Thai document types were used to evaluate the model’s performance?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 240,
+        "end": 540
+      },
+      "html": {
+        "start": 73,
+        "end": 373
+      }
+    },
+    "gold_quote": "## Abstract\n\nDocument extraction is a core component of digital workflows, yet existing vision-language models (VLMs) predominantly favor high-resource languages. Thai presents additional challenges due to script complexity from non-latin letters, the absence of explicit word boundaries, and the pre",
+    "answerable": true,
+    "shared_run": 2
+  },
+  {
+    "id": "gen-020",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What distinguishes Typhoon OCR from existing OCR pipelines and general-purpose vision-language models for Thai document extraction?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 8280,
+        "end": 8580
+      },
+      "html": {
+        "start": 7092,
+        "end": 7392
+      }
+    },
+    "gold_quote": "## 2 Typhoon OCR\n\nTyphoon OCR is an open VLM for end-to-end document extraction in Thai and English, including text recognition and layout-aware content reconstruction. It targets real-world documents with complex and heterogeneous layouts, where existing OCR pipelines and general-purpose VLMs perfo",
+    "answerable": true,
+    "shared_run": 5
+  },
+  {
+    "id": "gen-021",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What data sources were used to enhance the model’s ability to recognize mathematical equation structures?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 25920,
+        "end": 26197
+      },
+      "html": {
+        "start": 24221,
+        "end": 24498
+      }
+    },
+    "gold_quote": "## Stage 3\n\nMathematical expressions are sampled from LaTeX OCR999https://huggingface.co/datasets/linxy/LaTeX_OCR and OleehyO LaTeX Formulas101010https://huggingface.co/datasets/lamm-mit/OleehyO-latex-formulas to improve recognition of equation structures and symbolic layouts.",
+    "answerable": true,
+    "shared_run": 2
+  },
+  {
+    "id": "gen-022",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What proportion of the fine-tuning data for Typhoon OCR V1.5 comes from synthetic documents, and why was this synthetic portion deliberately kept large?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 27000,
+        "end": 27300
+      },
+      "html": {
+        "start": 25055,
+        "end": 25355
+      }
+    },
+    "gold_quote": "## 3.1.2 Dataset Statistics\n\nFigure 5 summarizes the statistics of training corpus used to fine-tune Typhoon OCR V1.5. The training corpus consists of a mixture of Thai and English document sources.\n\nFigure 5: Training dataset distribution for Typhoon OCR V1.5\n\nThe largest portion of the dataset (53",
+    "answerable": true,
+    "shared_run": 4
+  },
+  {
+    "id": "gen-023",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What document types are included in the evaluation corpus for the Thai OCR benchmark, and what are the main characteristics of each?",
+    "paper": "2601.14722v1",
+    "gold": {
+      "pdf": {
+        "start": 17640,
+        "end": 17940
+      },
+      "html": {
+        "start": 15863,
+        "end": 16163
+      }
+    },
+    "gold_quote": "## Benchmark\n\nEvaluation is conducted on an in-house Thai document corpus designed to reflect real-world document variability in both layout and content. The corpus comprises three categories: Thai financial reports, which include complex tables, charts, and multilingual content; Thai government for",
+    "answerable": true,
+    "shared_run": 1
+  },
+  {
+    "id": "gen-024",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What capabilities does the system demonstrate when processing a dense customs declaration form, and how does it ensure the extracted data aligns with a predefined structured output?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 34080,
+        "end": 34380
+      },
+      "html": {
+        "start": 31060,
+        "end": 31360
+      }
+    },
+    "gold_quote": "## Example Scenario.\n\nFigure 7: Example of GLM-OCR Key Information Extraction.\n\nIn a representative example involving a dense customs declaration form, the model successfully extracts structured fields based on a detailed input prompt. It accurately populates complex, nested JSON entities—such as sh",
+    "answerable": true,
+    "shared_run": 5
+  },
+  {
+    "id": "gen-025",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What specific architectural and system-level design choices enable GLM-OCR to achieve high throughput and accuracy on structured document tasks despite its compact size?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 6360,
+        "end": 6660
+      },
+      "html": {
+        "start": 3665,
+        "end": 3965
+      }
+    },
+    "gold_quote": "Beyond architectural optimization, GLM-OCR also considers the mismatch between conventional autoregressive generation and the characteristics of OCR tasks. OCR is inherently a deterministic task with strong local dependencies and explicit structural supervision, where strictly autoregressive token-b",
+    "answerable": true,
+    "shared_run": 3
+  },
+  {
+    "id": "gen-026",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What is the approximate cost, in RMB, to process 2,000 A4-sized scanned images using the GLM-OCR cloud API?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 27120,
+        "end": 27420
+      },
+      "html": {
+        "start": 24441,
+        "end": 24741
+      }
+    },
+    "gold_quote": "## 4.2 Model-as-a-Service (MaaS) API\n\nFor cloud-based deployments, GLM-OCR is accessible via a MaaS API\n 999https://docs.bigmodel.cn/cn/guide/models/vlm/glm-ocr. The service employs a highly cost-effective, unified pricing model for both input and output tokens, set at 0.2 RMB per million tokens. Un",
+    "answerable": true,
+    "shared_run": 5
+  },
+  {
+    "id": "gen-027",
+    "origin": "generated",
+    "category": "generated",
+    "question": "How is the performance of GLM-OCR assessed relative to other pipeline tools and vision-language models?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 19200,
+        "end": 19500
+      },
+      "html": {
+        "start": 16144,
+        "end": 16444
+      }
+    },
+    "gold_quote": "## 3 Evaluation\n\nIn this section, we evaluate the performance of GLM-OCR against current state-of-the-art pipeline tools, general Vision-Language Models (VLMs), and specialized OCR VLMs. To provide a comprehensive assessment, the evaluation is divided into two parts: standard Public Benchmarks and c",
+    "answerable": true,
+    "shared_run": 4
+  },
+  {
+    "id": "gen-028",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What types of input documents or content are most likely to cause a drop in model performance?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 35760,
+        "end": 36060
+      },
+      "html": {
+        "start": 32744,
+        "end": 33044
+      }
+    },
+    "gold_quote": "## 6.2 Data Coverage Limitations\n\nModel performance is influenced by the distribution and diversity of training data. Degradation may occur in scenarios involving:\n\n•\n\nExtremely low-resolution or heavily distorted documents,\n\n•\n\nHighly complex mathematical expressions,\n\n•\n\nDense or irregular tabular",
+    "answerable": true,
+    "shared_run": 2
+  },
+  {
+    "id": "gen-029",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What framework does GLM-OCR support for direct fine-tuning, and where can the detailed instructions for that process be found?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 27720,
+        "end": 28020
+      },
+      "html": {
+        "start": 25078,
+        "end": 25378
+      }
+    },
+    "gold_quote": "## 4.3 Fine-Tuning Capabilities\n\nIn scenarios where specific domain adaptation or enhanced task performance is required, GLM-OCR supports direct fine-tuning utilizing the LLaMA-Factory framework. Comprehensive tutorials and configuration guidelines for the fine-tuning process are available in the of",
+    "answerable": true,
+    "shared_run": 2
+  },
+  {
+    "id": "gen-030",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What are the two main ways users can deploy GLM-OCR depending on their task complexity?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 28080,
+        "end": 28380
+      },
+      "html": {
+        "start": 25497,
+        "end": 25797
+      }
+    },
+    "gold_quote": "## 5.1 Overview\n\nGLM-OCR is designed to support both high-level document understanding workflows and lightweight optical character recognition (OCR) tasks. Depending on application requirements, users may (1) integrate the GLM-OCR SDK for complex document parsing pipelines, or (2) directly invoke th",
+    "answerable": true,
+    "shared_run": 2
+  },
+  {
+    "id": "gen-031",
+    "origin": "generated",
+    "category": "generated",
+    "question": "Which open-source model achieves the highest score on the Nanonets-KIE benchmark, and how does it compare to the best closed-source result shown?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 20280,
+        "end": 20580
+      },
+      "html": {
+        "start": 16607,
+        "end": 16907
+      }
+    },
+    "gold_quote": "## Overall Benchmark Performance.\n\nAs shown in Table 3, GLM-OCR demonstrates superior performance across the majority of standard datasets. In Document Parsing, our model achieves the highest scores on OmniDocBench v1.5 (94.6), OCRBench Text (94.0), UniMERNet (96.5), and TEDS_TEST (86.0). It remains",
+    "answerable": true,
+    "shared_run": 4
+  },
+  {
+    "id": "gen-032",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What training objective was introduced to improve the decoder’s efficiency for structured output generation?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 17280,
+        "end": 17580
+      },
+      "html": {
+        "start": 14288,
+        "end": 14588
+      }
+    },
+    "gold_quote": "## Stage 2: Vision-Language Pretraining.\n\nIn Stage 2.1, we append GLM-0.5B to the Vision Transformer (ViT) and jointly pretrain the full model on image-text, document parsing, grounding, and VQA data to align multimodal representations. In Stage 2.2, we introduce the Multi-Token Prediction (MTP) obj",
+    "answerable": true,
+    "shared_run": 2
+  },
+  {
+    "id": "gen-033",
+    "origin": "generated",
+    "category": "generated",
+    "question": "Which specialized vision-language model under 4 billion parameters achieves the highest average score on the benchmark, and what is that score?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 23280,
+        "end": 23580
+      },
+      "html": {
+        "start": 19632,
+        "end": 19932
+      }
+    },
+    "gold_quote": "76B\n80.33\n0.131\n83.42\n70.64\n77.74\n0.113\n\nInternVL3.5-241B [33]\n\n241B\n82.67\n0.142\n87.23\n75.00\n81.28\n0.125\n\nGPT-5.2 [22]\n\n-\n85.50\n0.123\n86.11\n82.66\n87.35\n0.099\n\nQwen2.5-VL-72B [3]\n\n72B\n87.02\n0.094\n88.27\n82.15\n86.22\n0.102\n\nGemini-2.5 Pro [10]\n\n-\n88.03\n0.075\n85.82\n85.71\n90.29\n0.097\n\nQwen3-VL [2]\n\n235B\n8",
+    "answerable": true,
+    "shared_run": 1
+  },
+  {
+    "id": "gen-034",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What real-world accuracy scores does GLM-OCR achieve for table recognition, seal recognition, and receipt key information extraction?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 8280,
+        "end": 8580
+      },
+      "html": {
+        "start": 5749,
+        "end": 6049
+      }
+    },
+    "gold_quote": "In addition to public benchmarks, we evaluate GLM-OCR on six high-frequency real-world scenarios, including code document parsing, natural-scene table recognition, handwritten text recognition, multilingual OCR 222Chinese, English, French, Spanish, Russian, German, Japanese, and Korean, seal recogni",
+    "answerable": true,
+    "shared_run": 4
+  },
+  {
+    "id": "gen-035",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What real-world challenges does the model handle when transcribing a multilingual restaurant menu, and what specific elements does it preserve in its output?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 30120,
+        "end": 30420
+      },
+      "html": {
+        "start": 27438,
+        "end": 27738
+      }
+    },
+    "gold_quote": "## Example Scenario.\n\nFigure 4: Example of GLM-OCR Text Recognition.\n\nFigure 4 illustrates a real-world text recognition scenario using a restaurant menu board containing multilingual content (e.g., Italian dish names and English phrases) and price annotations with special characters (e.g., the euro",
+    "answerable": true,
+    "shared_run": 2
+  },
+  {
+    "id": "gen-036",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What mechanism allows GLM-OCR to generate multiple output tokens per decoding step while maintaining low memory usage?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 480,
+        "end": 780
+      },
+      "html": {
+        "start": 547,
+        "end": 847
+      }
+    },
+    "gold_quote": "## Abstract\n\nGLM-OCR is an efficient 0.9B-parameter compact multimodal model designed for real-world document understanding. It combines a 0.4B-parameter CogViT visual encoder with a 0.5B-parameter GLM language decoder, achieving a strong balance between computational efficiency and recognition perf",
+    "answerable": true,
+    "shared_run": 2
+  },
+  {
+    "id": "gen-037",
+    "origin": "generated",
+    "category": "generated",
+    "question": "How do the preprocessing requirements for key information extraction differ from those for document parsing in the unified framework?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 15600,
+        "end": 15900
+      },
+      "html": {
+        "start": 12521,
+        "end": 12821
+      }
+    },
+    "gold_quote": "For KIE, the full document image is directly fed into the GLM-OCR Core together with a task-specific textual prompt (e.g., instructing the model to extract invoice fields in JSON format). Unlike document parsing, this task does not rely on explicit layout cropping. Instead, the model learns to atten",
+    "answerable": true,
+    "shared_run": 2
+  },
+  {
+    "id": "gen-038",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What is the total parameter count of GLM-OCR, and how does its architecture balance recognition performance with deployment efficiency?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 4440,
+        "end": 4740
+      },
+      "html": {
+        "start": 1759,
+        "end": 2059
+      }
+    },
+    "gold_quote": "## 1 Introduction\n\nDocument understanding is a core capability in modern information systems, supporting the extraction and structuring of knowledge from visually rich and layout-intensive documents such as financial reports, scientific articles, contracts, and invoices. Traditional OCR systems [29;",
+    "answerable": true,
+    "shared_run": 2
+  },
+  {
+    "id": "gen-039",
+    "origin": "generated",
+    "category": "generated",
+    "question": "Which OCR model achieves the highest accuracy on the 92.38 benchmark metric while having the smallest parameter count?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 24360,
+        "end": 24574
+      },
+      "html": {
+        "start": 20830,
+        "end": 21044
+      }
+    },
+    "gold_quote": "1.2B\n90.67\n0.047\n88.46\n88.22\n92.38\n0.044\n\nPaddleOCR-VL [6]\n\n0.9B\n92.86\n0.035\n91.22\n90.89\n94.76\n0.043\n\nPaddleOCR-VL-1.5 [5]\n\n0.9B\n94.50\n0.035\n94.21\n92.76\n95.79\n0.042\n\nGLM-OCR\n0.9B\n94.62\n0.040\n93.90\n93.96\n96.39\n0.044",
+    "answerable": true,
+    "shared_run": 1
+  },
+  {
+    "id": "gen-040",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What specific tasks are included in the curated OCR datasets used during the third stage of model training, and why is the data mixture balanced across them?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 17640,
+        "end": 17940
+      },
+      "html": {
+        "start": 14654,
+        "end": 14954
+      }
+    },
+    "gold_quote": "## Stage 3: Supervised Fine-Tuning (SFT).\n\nIn this stage, we fine-tune the model on curated OCR datasets covering text recognition, formula transcription, table structure recovery, and key information extraction. The objective is to specialize the model for high-precision structured outputs under re",
+    "answerable": true,
+    "shared_run": 3
+  },
+  {
+    "id": "gen-041",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What is the throughput of GLM-OCR for PDF documents compared to its image input rate under identical testing conditions?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 26040,
+        "end": 26340
+      },
+      "html": {
+        "start": 23289,
+        "end": 23589
+      }
+    },
+    "gold_quote": "## 4.1 Local Deployment and SDK Integration\n\nWith a compact parameter scale of 0.9B, GLM-OCR is highly optimized for localized inference and resource-constrained environments. The model supports efficient deployment across mainstream frameworks, including vLLM, SGLang, and Ollama. To facilitate seam",
+    "answerable": true,
+    "shared_run": 3
+  },
+  {
+    "id": "gen-042",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What two main tasks does the GLM-OCR framework support, and what does each produce?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 9360,
+        "end": 9660
+      },
+      "html": {
+        "start": 6974,
+        "end": 7274
+      }
+    },
+    "gold_quote": "## 2 Methodology\n\nIn this section, we present the overall design of the GLM-OCR framework, including its architectural components, task formulation, and training strategy. We first introduce the core design motivations that guide our system, followed by a detailed description of the model architectu",
+    "answerable": true,
+    "shared_run": 3
+  },
+  {
+    "id": "gen-043",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What two training objectives are combined when pretraining the vision encoder on billions of image-text pairs?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 16800,
+        "end": 17100
+      },
+      "html": {
+        "start": 13785,
+        "end": 14085
+      }
+    },
+    "gold_quote": "## Stage 1: Vision Encoder Training.\n\nWe first train the vision encoder using large-scale image-text and grounding data to establish strong visual representation capabilities. In this stage, the model is trained on a dataset scaled up to tens of billions of image-text pairs. The training incorporate",
+    "answerable": true,
+    "shared_run": 4
+  },
+  {
+    "id": "gen-044",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What are the four main stages in the training pipeline, and which stage incorporates reinforcement learning?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 16080,
+        "end": 16380
+      },
+      "html": {
+        "start": 13028,
+        "end": 13328
+      }
+    },
+    "gold_quote": "## 2.2 Training Recipe\n\nThe training process of GLM-OCR is divided into several distinct stages, systematically progressing from vision-language alignment to task-specific refinement and reinforcement learning. The detailed training recipe, including the data types, learning rates, and training scal",
+    "answerable": true,
+    "shared_run": 2
+  },
+  {
+    "id": "gen-045",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What specific document-analysis challenges does the example clinical summary table present, and how does the model address them to ensure accurate data extraction?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 31680,
+        "end": 31980
+      },
+      "html": {
+        "start": 28672,
+        "end": 28972
+      }
+    },
+    "gold_quote": "## Example Scenario.\n\nFigure 5: Example of GLM-OCR Table Recognition.\n\nFigure 5 presents a clinical summary table containing hierarchical column headers, merged cells, percentage values, missing-value indicators, and statistical annotations (e.g., p-values). The input image exhibits typical document",
+    "answerable": true,
+    "shared_run": 3
+  },
+  {
+    "id": "gen-046",
+    "origin": "generated",
+    "category": "generated",
+    "question": "How does GLM-OCR's performance on Receipt KIE compare to that of GPT-5.2?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 25560,
+        "end": 25860
+      },
+      "html": {
+        "start": 22804,
+        "end": 23104
+      }
+    },
+    "gold_quote": "While PaddleOCR-VL-1.5 holds a marginal lead in Handwritten Text (87.4 vs. GLM-OCR’s 87.0), GLM-OCR remains highly effective. Crucially, in practical application tasks like Receipt KIE, GLM-OCR (94.5) easily surpasses proprietary models like GPT-5.2 (83.5). These in-house results validate that GLM-O",
+    "answerable": true,
+    "shared_run": 2
+  },
+  {
+    "id": "gen-047",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What engineering strategies enable GLM-OCR to achieve efficiency gains without increasing model size?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 36840,
+        "end": 37140
+      },
+      "html": {
+        "start": 33772,
+        "end": 34072
+      }
+    },
+    "gold_quote": "## 7 Conclusion\n\nThis report introduces GLM-OCR as a practical solution for structured document understanding under real-world system constraints. Instead of relying on large model scaling, the design prioritizes controllable latency, memory efficiency, and structured output reliability. Through the",
+    "answerable": true,
+    "shared_run": 4
+  },
+  {
+    "id": "gen-048",
+    "origin": "generated",
+    "category": "generated",
+    "question": "What specific structural elements of complex mathematical notation does GLM-OCR successfully preserve when converting dense equations into LaTeX?",
+    "paper": "2603.10910v2",
+    "gold": {
+      "pdf": {
+        "start": 33000,
+        "end": 33300
+      },
+      "html": {
+        "start": 29932,
+        "end": 30232
+      }
+    },
+    "gold_quote": "## Example Scenario.\n\nFigure 6: Example of GLM-OCR Formula Recognition.\n\nGiven an image containing inline and display equations from a scientific manuscript, the model transcribes the formulas into syntactically valid LaTeX expressions. The output preserves operators, superscripts, subscripts, and f",
+    "answerable": true,
+    "shared_run": 2
+  }
+]

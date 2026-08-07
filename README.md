@@ -67,9 +67,10 @@ history, assistant messages included.
 |---|---|
 | `config.py` | Environment → `Settings` |
 | `llm.py` | `ChatOpenRouter` — the model, plus the reasoning round trip below |
-| `arxiv_client.py` | arXiv HTTP, throttling, Atom parsing, formatting |
+| `arxiv_client.py` | arXiv API HTTP, throttling, Atom parsing, formatting |
+| `arxiv_fulltext.py` | Full paper text — LaTeXML HTML parsing, PDF fallback, cache |
 | `tools/datetime_tools.py` | `get_current_datetime` |
-| `tools/arxiv_tools.py` | `search_arxiv`, `browse_arxiv`, `get_arxiv_paper` |
+| `tools/arxiv_tools.py` | The four arXiv tools |
 | `tools/__init__.py` | `TOOLS` registry |
 | `agent.py` | The `StateGraph` |
 | `cli.py` | The REPL |
@@ -80,11 +81,13 @@ history, assistant messages included.
 |---|---|
 | `search_arxiv(query, category=, sort_by=, …)` | "what research exists on X" |
 | `browse_arxiv(category, year, month=, …)` | the `arxiv.org/list/cs.HC/2019-01` pattern |
-| `get_arxiv_paper(paper_ids)` | an identifier or a pasted `abs/` URL |
+| `get_arxiv_paper(paper_ids)` | metadata + abstract, by identifier |
+| `get_arxiv_fulltext(paper_id, section=)` | the paper's actual body text |
 
-All three go through the official API at `export.arxiv.org/api/query`, not the browse pages.
-Results carry real `arxiv.org/abs/` links, and the system prompt tells the model to cite those
-rather than recall papers from memory.
+The first three go through the official API at `export.arxiv.org/api/query`, not the browse
+pages. Results carry real `arxiv.org/abs/` links, and the system prompt tells the model to cite
+those rather than recall papers from memory — and to reach for `get_arxiv_fulltext`, not the
+abstract, whenever it is asked to summarize a paper or discuss its details.
 
 Two things in `arxiv_client.py` are load-bearing:
 
@@ -109,6 +112,37 @@ them to match the manual re-breaks it invisibly.
 One honest caveat: `browse_arxiv` filters on *submission* date while the website's listing
 pages order by *announcement* date, so counts differ slightly at period boundaries — cs.HC for
 2019-01 is 62 here against the site's 64.
+
+### Full text
+
+`get_arxiv_fulltext` tries three sources in order, because no single one covers the archive:
+
+1. **`arxiv.org/html/<id>`** — arXiv's own LaTeXML rendering. Recent papers, *including ones
+   ar5iv has not converted yet*.
+2. **`ar5iv.labs.arxiv.org/html/<id>`** — LaTeXML over the back catalogue. It reports failure by
+   **redirecting to `/abs/`**, not with a status code, so `arxiv_fulltext` checks the final URL.
+   Miss this and you parse the abstract page as if it were the paper.
+3. **`arxiv.org/pdf/<id>`** → `pypdf`. Works everywhere, reads worst.
+
+Measured over eight papers spanning 1996–2026: arXiv HTML had three, ar5iv five, the two
+together seven. Only a 1996 `hep-th` paper needed the PDF.
+
+Parsing is stdlib `html.parser` — no beautifulsoup, no lxml. LaTeXML output is regular enough,
+and one detail earns it: **every `<math>` carries an `alttext` holding the original LaTeX**, so
+formulas come out as `$h_{t}$` instead of flattened MathML. Extraction starts at
+`<article class="ltx_document">`, which is what keeps arxiv.org's cookie dialog and fundraising
+banner out of the paper.
+
+PDF-derived text is labelled lower-fidelity in the tool's own output, so the model hedges on it.
+That is not defensive boilerplate — the 1996 paper extracts as `bla ck hole`, `vi olation`,
+`eﬀect`. Ligatures are normalized; the kerning-induced word splits can't be, since there is no
+safe way to tell them from real spaces.
+
+**Size.** A typical paper is ~10k tokens, but *A Survey of Large Language Models* is ~153k — and
+`MessagesState` resends whatever lands in history on every later turn. So past
+`FULLTEXT_LIMIT` (60k chars) the tool returns the abstract plus a section index instead, and the
+model asks for the section it needs. Parsed papers are cached (4 deep), so those follow-ups cost
+no download and no throttle wait.
 
 ## Adding a tool
 

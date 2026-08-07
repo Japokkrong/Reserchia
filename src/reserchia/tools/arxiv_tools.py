@@ -28,12 +28,25 @@ from ..arxiv_client import (
     month_range,
     normalize_id,
 )
+from ..arxiv_fulltext import (
+    PDF_URL,
+    fetch_document,
+    find_section,
+    render,
+    section_index,
+    subtree,
+)
 
 _EXAMPLE_CATEGORIES = ("cs.HC", "cs.AI", "cs.LG", "math.CO", "physics.optics")
 _EXAMPLE_IDS = ("1706.03762", "2404.16130v1", "hep-th/9603067")
 
 #: arXiv's first submissions were in August 1991.
 _FIRST_YEAR = 1991
+
+#: Roughly 15k tokens. A typical paper is well under this; a survey can be ten
+#: times over it, and because the graph carries one growing message list, an
+#: oversized body would be resent on every later turn of the conversation.
+FULLTEXT_LIMIT = 60_000
 
 #: Shape check only -- the real list runs to ~150 categories and changes, so a
 #: wrong-but-plausible one is caught by its empty result set instead.
@@ -329,3 +342,105 @@ def get_arxiv_paper(paper_ids: PaperIds) -> str:
             f"Skipped, not arXiv identifiers: {', '.join(repr(i) for i in invalid)}."
         )
     return "\n\n".join(blocks)
+
+
+@tool
+def get_arxiv_fulltext(paper_id: PaperIds, section: str | None = None) -> str:
+    """Read the full body text of one arXiv paper, not just its abstract.
+
+    Use this whenever the user wants a summary of a paper, asks what it did,
+    how it works, what its method, experiments, results or conclusions were, or
+    asks about any specific claim in it. An abstract is not enough to answer
+    those -- fetch the paper.
+
+    Long papers come back as a list of section headings instead of the whole
+    text. When that happens, call this again with the section you need.
+
+    Args:
+        paper_id: One arXiv identifier, as a string -- always quoted, never as
+            a bare number, since '1706.03762' is an identifier and not a
+            decimal. A bare id, a version ('2404.16130v1'), the older style
+            ('hep-th/9603067'), or a pasted https://arxiv.org/abs/... URL. If
+            you only know the title, use search_arxiv first to get the id.
+        section: Optional section to return on its own, named either by number
+            ('3', '3.2') or by heading ('Positional Encoding'). Omit it to get
+            the whole paper.
+    """
+    identifier = normalize_id(paper_id)
+    if not identifier:
+        return (
+            f"Error: {paper_id!r} is not an arXiv identifier. They look like "
+            f"{', '.join(_EXAMPLE_IDS)}. Use search_arxiv to find the paper first."
+        )
+
+    document = fetch_document(identifier)
+    if isinstance(document, str):
+        return (
+            f"{document}\n\n"
+            f"PDF: {PDF_URL.format(identifier)}\n"
+            "Use get_arxiv_paper for the abstract, and tell the user the full "
+            "text could not be retrieved rather than describing the paper from "
+            "memory."
+        )
+
+    header = [f"arXiv:{identifier}"]
+    if document.title:
+        header.append(f"Title: {document.title}")
+    header.append(f"Source: {document.source}")
+    if document.lower_fidelity:
+        header.append(
+            "Note: this text was extracted from the PDF, so layout, equations "
+            "and some word spacing are unreliable. Treat quotations with care."
+        )
+    prefix = "\n".join(header)
+
+    if section:
+        found = find_section(document, section)
+        if found is None:
+            index = section_index(document)
+            return f"{prefix}\n\nNo section matching {section!r}." + (
+                f" Available sections:\n{index}"
+                if index
+                else " This paper has no section headings."
+            )
+
+        # Subsections included: LaTeXML stores "3" and "3.1" as flat siblings,
+        # and someone asking for section 3 means the whole of it.
+        parts = subtree(document, found)
+        text = render(parts)
+        if len(text) > FULLTEXT_LIMIT:
+            listing = "\n".join(
+                f"  {part.heading} ({len(part.text):,} chars)"
+                for part in parts[1:]
+                if part.heading
+            )
+            return (
+                f"{prefix}\n\nSection {parts[0].heading!r} is long "
+                f"({len(text):,} characters). Call this tool again naming one "
+                f"of its subsections:\n{listing}"
+            )
+        return f"{prefix}\n\n{text}"
+
+    body = document.text
+    if len(body) <= FULLTEXT_LIMIT:
+        return f"{prefix}\n\n{body}"
+
+    # Too long to return whole: lead with the abstract so the model still has
+    # something to work from, then the index so it can ask for what it needs.
+    opening = next(
+        (s for s in document.sections if "abstract" in s.heading.casefold() and s.text),
+        next((s for s in document.sections if s.text), None),
+    )
+    return "\n\n".join(
+        filter(
+            None,
+            [
+                prefix,
+                f"This paper is long ({len(body):,} characters), so here is its "
+                "abstract and contents rather than the whole text. Call this "
+                "tool again with section='...' for the part you need.",
+                f"## {opening.heading}\n\n{opening.text}" if opening else "",
+                f"Sections:\n{section_index(document)}",
+            ],
+        )
+    )

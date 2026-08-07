@@ -66,7 +66,10 @@ _OLD_ID = r"[a-zA-Z-]+(?:\.[a-zA-Z-]+)?/\d{7}(?:v\d+)?"
 
 # -- HTTP ---------------------------------------------------------------------
 
-_client = httpx.Client(
+#: Shared by every arXiv host we touch -- the API here, and the full-text
+#: fetches in ``arxiv_fulltext``. arXiv's terms of use govern the service, not
+#: one hostname, so all of it goes down one connection.
+client = httpx.Client(
     headers={"User-Agent": USER_AGENT},
     timeout=TIMEOUT,
     follow_redirects=True,
@@ -76,8 +79,12 @@ _lock = threading.Lock()
 _last_request = 0.0
 
 
-def _throttle() -> None:
-    """Hold the gap arXiv's terms of use require, serialising callers."""
+def throttle() -> None:
+    """Hold the gap arXiv's terms of use require, serialising callers.
+
+    Shared with ``arxiv_fulltext`` for the same reason as ``client``: a
+    full-text fetch has to queue behind an API call, not race it.
+    """
     global _last_request
     with _lock:
         wait = MIN_INTERVAL - (time.monotonic() - _last_request)
@@ -117,9 +124,9 @@ def fetch(params: dict) -> Results | str:
     the tools above can hand the message straight to the model and let it
     correct itself on the next turn.
     """
-    _throttle()
+    throttle()
     try:
-        response = _client.get(API_URL, params=params)
+        response = client.get(API_URL, params=params)
     except httpx.RequestError as exc:
         return (
             f"Error: could not reach the arXiv API ({type(exc).__name__}). "

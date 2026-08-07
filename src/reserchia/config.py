@@ -27,6 +27,16 @@ class Settings:
     reasoning: str
     reasoning_effort: str
     temperature: float
+    #: Encoder for the paper library. 1024-dim, 8192-token context.
+    embed_model: str = "baai/bge-m3"
+    #: Where the library lives. A personal accumulating collection, so it
+    #: belongs under the user's data dir rather than in whatever directory the
+    #: agent happened to be launched from.
+    store_dir: Path = Path.home() / ".local" / "share" / "reserchia"
+    #: Dense/lexical mix. 0.5 measured best on Recall@1/@5/@10 and MRR, and the
+    #: top is flat from 0.4-0.6 -- exposed rather than buried so it can be
+    #: re-tuned when the library grows past a couple of papers.
+    rag_alpha: float = 0.5
     site_url: str = ""
     app_name: str = ""
 

@@ -12,6 +12,13 @@ from langgraph.checkpoint.memory import InMemorySaver
 from .agent import build_app
 from .config import ConfigError, get_settings
 from .llm import reasoning_text
+from .rag import ingest
+from .rag.store import count as rag_count
+from .tools.rag_tools import list_paper_library
+
+#: How long to let a background paper indexing finish on the way out. Ingests
+#: are a couple of API calls; killing one mid-write leaves a half-indexed paper.
+INGEST_GRACE = 30.0
 
 _COLOR = sys.stdout.isatty() and not os.getenv("NO_COLOR")
 
@@ -126,6 +133,18 @@ def _run_turn(app, question: str, config: dict) -> None:
     printer.finish()
 
 
+def _shutdown() -> None:
+    """Let a background paper indexing finish before the process goes away."""
+    if not ingest.pending():
+        return
+    print(dim("indexing the last paper into the library..."), file=sys.stderr)
+    if not ingest.wait(timeout=INGEST_GRACE):
+        print(
+            dim(f"still indexing after {INGEST_GRACE:.0f}s; it will be re-read later."),
+            file=sys.stderr,
+        )
+
+
 def main() -> int:
     try:
         settings = get_settings()
@@ -137,31 +156,42 @@ def main() -> int:
     config = {"configurable": {"thread_id": str(uuid.uuid4())}}
 
     mode = "reasoning on" if settings.reasoning_enabled else "reasoning off"
-    print(f"Reserchia — {settings.model} ({mode})")
-    print(dim("Commands: /reset to clear memory, /exit to quit.\n"))
+    try:
+        library = rag_count()
+    except Exception:  # noqa: BLE001 - a broken library must not stop the REPL
+        library = 0
+    shelf = f", {library} passages in library" if library else ""
+    print(f"Reserchia — {settings.model} ({mode}{shelf})")
+    print(dim("Commands: /library to list papers, /reset to clear memory, /exit.\n"))
 
-    while True:
-        try:
-            question = input("> ").strip()
-        except (EOFError, KeyboardInterrupt):
-            print()
-            return 0
+    try:
+        while True:
+            try:
+                question = input("> ").strip()
+            except (EOFError, KeyboardInterrupt):
+                print()
+                return 0
 
-        if not question:
-            continue
-        if question in ("/exit", "/quit"):
-            return 0
-        if question == "/reset":
-            config = {"configurable": {"thread_id": str(uuid.uuid4())}}
-            print(dim("Conversation memory cleared.\n"))
-            continue
+            if not question:
+                continue
+            if question in ("/exit", "/quit"):
+                return 0
+            if question == "/reset":
+                config = {"configurable": {"thread_id": str(uuid.uuid4())}}
+                print(dim("Conversation memory cleared.\n"))
+                continue
+            if question == "/library":
+                print(list_paper_library.invoke({}) + "\n")
+                continue
 
-        try:
-            _run_turn(app, question, config)
-        except KeyboardInterrupt:
-            print(dim("\n(interrupted)\n"))
-        except Exception as exc:  # noqa: BLE001 - keep the REPL alive
-            print(red(f"\nerror: {type(exc).__name__}: {exc}\n"), file=sys.stderr)
+            try:
+                _run_turn(app, question, config)
+            except KeyboardInterrupt:
+                print(dim("\n(interrupted)\n"))
+            except Exception as exc:  # noqa: BLE001 - keep the REPL alive
+                print(red(f"\nerror: {type(exc).__name__}: {exc}\n"), file=sys.stderr)
+    finally:
+        _shutdown()
 
 
 if __name__ == "__main__":

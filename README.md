@@ -69,8 +69,10 @@ history, assistant messages included.
 | `llm.py` | `ChatOpenRouter` — the model, plus the reasoning round trip below |
 | `arxiv_client.py` | arXiv API HTTP, throttling, Atom parsing, formatting |
 | `arxiv_fulltext.py` | Full paper text — LaTeXML HTML parsing, PDF fallback, cache |
+| `rag/` | The paper library — chunking, bge-m3, ChromaDB, hybrid search |
 | `tools/datetime_tools.py` | `get_current_datetime` |
 | `tools/arxiv_tools.py` | The four arXiv tools |
+| `tools/rag_tools.py` | `search_paper_library`, `list_paper_library` |
 | `tools/__init__.py` | `TOOLS` registry |
 | `agent.py` | The `StateGraph` |
 | `cli.py` | The REPL |
@@ -144,6 +146,52 @@ safe way to tell them from real spaces.
 model asks for the section it needs. Parsed papers are cached (4 deep), so those follow-ups cost
 no download and no throttle wait.
 
+## The paper library
+
+Papers the agent has read are kept in a local ChromaDB collection, so asking about one twice
+does not fetch it twice.
+
+```
+"summarize arXiv 1706.03762"
+  |
+  +-> search_paper_library    empty / paper absent -> escalate
+  +-> get_arxiv_fulltext      answer this turn from the full text
+        |
+        +-> background: chunk -> bge-m3 -> ChromaDB
+
+next session, same paper
+  +-> search_paper_library    5 passages, no API call at all
+```
+
+`get_arxiv_fulltext` returns immediately and indexes on a single background worker, so the two
+paths really do run at once. The worker is deliberately **not** a daemon — the CLI waits for it
+on exit (up to 30s), because a daemon killed mid-write leaves a half-indexed paper.
+
+**Where the fallback decision is made matters.** Whether a paper is *in* the library is decided
+exactly, by an id lookup. Whether the retrieved passages *answer the question* is left to the
+model, which is reading them anyway. It is tempting to use a similarity threshold for the
+second part — that was measured and it does not work: correct top-1 hits scored as low as
+0.385 while questions the corpus could not answer scored 0.492–0.498. Any cutoff rejecting the
+latter also rejects real answers.
+
+Settings come from `rag-eda/` (see [REPORT.md](rag-eda/REPORT.md)): section-aligned chunks, no
+overlap, `baai/bge-m3`, and dense+BM25 fused at **α = 0.5** — the peak on Recall@1/@5/@10 and
+MRR simultaneously, with both extremes clearly worse. `RESERCHIA_RAG_ALPHA` exposes it.
+
+Two things in `rag/` are load-bearing:
+
+- **Embedding batches are sized by token budget, not item count.** bge-m3's 8192-token context
+  applies to the whole request, and exceeding it returns HTTP 429 *"engine is currently
+  overloaded"* rather than a size error — badly misleading. Measured: 6,390 tokens per request
+  succeeded, 12,408 failed.
+- **Score normalisation floors at epsilon, not zero.** Plain min-max maps a pool's worst item to
+  exactly 0.0, making it indistinguishable from an item that never appeared in that pool; a
+  BM25-only result could then tie with dense's last hit and win on sort order. The test is that
+  α=1.0 reproduces pure dense ranking exactly and α=0.0 pure BM25.
+
+`/library` lists what has been read. Chroma's own hybrid search (`Knn`, `Rrf`) is hosted-only
+and raises `NotImplementedError` on a local `PersistentClient`, which is why BM25 is in Python.
+
 ## Adding a tool
 
 1. Write a `@tool`-decorated function in `src/reserchia/tools/`. Its docstring is what the
@@ -164,6 +212,9 @@ That's it — `agent.py` binds whatever is in `TOOLS`, and `ToolNode` executes i
 | `OPENROUTER_TEMPERATURE` | `0` | |
 | `OPENROUTER_SITE_URL` | — | Optional `HTTP-Referer`, for OpenRouter's leaderboards |
 | `OPENROUTER_APP_NAME` | — | Optional `X-Title` |
+| `OPENROUTER_EMBED_MODEL` | `baai/bge-m3` | Library encoder; changing it invalidates stored vectors |
+| `RESERCHIA_STORE_DIR` | `~/.local/share/reserchia` | Where the paper library lives |
+| `RESERCHIA_RAG_ALPHA` | `0.5` | Library search mix: 0 = BM25, 1 = embeddings |
 
 ## Why `llm.py` looks the way it does
 

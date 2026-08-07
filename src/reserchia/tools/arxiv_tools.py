@@ -36,6 +36,7 @@ from ..arxiv_fulltext import (
     section_index,
     subtree,
 )
+from ..rag.ingest import ingest_later
 
 _EXAMPLE_CATEGORIES = ("cs.HC", "cs.AI", "cs.LG", "math.CO", "physics.optics")
 _EXAMPLE_IDS = ("1706.03762", "2404.16130v1", "hep-th/9603067")
@@ -382,6 +383,15 @@ def get_arxiv_fulltext(paper_id: PaperIds, section: str | None = None) -> str:
             "text could not be retrieved rather than describing the paper from "
             "memory."
         )
+
+    # The second of the two paths. The full text goes back to the agent now, so
+    # this turn is answered immediately; meanwhile the paper is chunked,
+    # embedded and stored in the background so the next question about it can be
+    # served from the library without touching the API. `fetch_document` caches
+    # the parsed document, so the worker re-uses it rather than downloading
+    # again. A failure here is swallowed -- it costs a repeat fetch later, which
+    # is not worth interrupting an answer for.
+    ingest_later(identifier)
 
     header = [f"arXiv:{identifier}"]
     if document.title:

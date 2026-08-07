@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from functools import lru_cache
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -75,6 +76,14 @@ def _choice(name: str, default: str, valid: tuple[str, ...]) -> str:
     return value
 
 
+def _number(name: str, default: str) -> float:
+    raw = os.getenv(name, default).strip() or default
+    try:
+        return float(raw)
+    except ValueError as exc:
+        raise ConfigError(f"{name} must be a number (got {raw!r}).") from exc
+
+
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     api_key = os.getenv("OPENROUTER_API_KEY", "").strip()
@@ -85,13 +94,15 @@ def get_settings() -> Settings:
             "https://openrouter.ai/keys"
         )
 
-    raw_temperature = os.getenv("OPENROUTER_TEMPERATURE", "0").strip()
-    try:
-        temperature = float(raw_temperature)
-    except ValueError as exc:
-        raise ConfigError(
-            f"OPENROUTER_TEMPERATURE must be a number (got {raw_temperature!r})."
-        ) from exc
+    temperature = _number("OPENROUTER_TEMPERATURE", "0")
+    alpha = _number("RESERCHIA_RAG_ALPHA", "0.5")
+    if not 0.0 <= alpha <= 1.0:
+        raise ConfigError(f"RESERCHIA_RAG_ALPHA must be between 0 and 1 (got {alpha}).")
+
+    default_store = Path.home() / ".local" / "share" / "reserchia"
+    store_dir = Path(
+        os.getenv("RESERCHIA_STORE_DIR", "").strip() or default_store
+    ).expanduser()
 
     return Settings(
         api_key=api_key,
@@ -106,6 +117,9 @@ def get_settings() -> Settings:
             "OPENROUTER_REASONING_EFFORT", "low", VALID_EFFORT
         ),
         temperature=temperature,
+        embed_model=os.getenv("OPENROUTER_EMBED_MODEL", "baai/bge-m3").strip(),
+        store_dir=store_dir,
+        rag_alpha=alpha,
         site_url=os.getenv("OPENROUTER_SITE_URL", "").strip(),
         app_name=os.getenv("OPENROUTER_APP_NAME", "").strip(),
     )

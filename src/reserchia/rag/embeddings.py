@@ -11,6 +11,7 @@ use cosine space directly with no renormalisation step.
 
 from __future__ import annotations
 
+import threading
 import time
 
 from openai import OpenAI
@@ -39,6 +40,26 @@ BACKOFF_BASE = 2.0
 MAX_BACKOFF = 32.0
 
 _client: OpenAI | None = None
+
+#: Cumulative embedding tokens billed this process. Chat usage is reported by
+#: the model itself, but embeddings are spent quietly by library search and by
+#: background indexing, so they would otherwise be invisible.
+_tokens = 0
+_tokens_lock = threading.Lock()
+
+
+def tokens_used() -> int:
+    with _tokens_lock:
+        return _tokens
+
+
+def _record(response) -> None:
+    usage = getattr(response, "usage", None)
+    if usage is None:
+        return
+    global _tokens
+    with _tokens_lock:
+        _tokens += getattr(usage, "prompt_tokens", 0) or 0
 
 
 def _openai(settings: Settings) -> OpenAI:
@@ -79,6 +100,7 @@ def embed(texts: list[str], settings: Settings | None = None) -> list[list[float
     vectors: list[list[float]] = []
     for batch in _batches(texts):
         response = _call(client, settings.embed_model, batch)
+        _record(response)
         # `data` carries an explicit index; do not trust list order.
         for item in sorted(response.data, key=lambda item: item.index):
             if len(item.embedding) != DIMENSIONS:

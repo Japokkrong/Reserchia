@@ -33,10 +33,33 @@ Commands: /reset to clear memory, /exit to quit.
 It's just past 2:14 AM on Tuesday, August 4th in Tokyo.
 ```
 
-With `OPENROUTER_REASONING=enabled` the model's thinking streams first, under `[thinking]`.
+With `OPENROUTER_REASONING=enabled` the model's thinking streams first, under `[thinking]`, and
+reasoning tokens are broken out in the count.
 
 Conversation memory lasts for the life of the process (`InMemorySaver`); `/reset` starts a
 fresh thread.
+
+### Token usage
+
+Every turn ends with a usage line:
+
+```
+  [tokens] 2 calls · in 9,703 (8,192 cached) · out 166 · embed 6 · turn 9,875 · session 22,726
+```
+
+- **calls** — a ReAct turn is several model calls, not one; the model is re-invoked after each
+  tool result.
+- **in** grows every turn, because `MessagesState` resends the whole conversation each call.
+  Watching it climb (5,573 → 7,070 → 9,703 over three turns above) is the clearest picture of
+  why retrieval beats pasting whole papers into the history.
+- **cached** is prompt-cache reuse, billed at a discount — large because the system prompt and
+  history repeat.
+- **embed** is bge-m3 spend for library search, and includes any background indexing that
+  finished during the turn.
+
+Counts come from the provider's own `usage` field, not an estimate. Cost is not shown: OpenRouter
+reports it, but `langchain_openai` discards the field before it reaches us — the same class of
+gap that `llm.py` works around for reasoning.
 
 ## The graph
 

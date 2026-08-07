@@ -44,6 +44,71 @@ def _format_call(call: dict) -> str:
     return f"{call.get('name')}({args})"
 
 
+class Usage:
+    """Token accounting for one turn, and for the session.
+
+    A ReAct turn is several model calls, not one -- the model is re-invoked
+    after every tool result, and `MessagesState` resends the whole conversation
+    each time. So per-turn input tokens grow with the conversation, which is
+    exactly the thing worth being able to see.
+    """
+
+    def __init__(self) -> None:
+        self.turns = 0
+        self.session_total = 0
+        self._reset()
+
+    def _reset(self) -> None:
+        self.calls = 0
+        self.input = 0
+        self.output = 0
+        self.cached = 0
+        self.reasoning = 0
+        self.embed_start = _embedding_tokens()
+
+    def start_turn(self) -> None:
+        self._reset()
+
+    def record(self, metadata: dict | None) -> None:
+        if not metadata:
+            return
+        self.calls += 1
+        self.input += metadata.get("input_tokens", 0) or 0
+        self.output += metadata.get("output_tokens", 0) or 0
+        self.cached += (metadata.get("input_token_details") or {}).get("cache_read", 0) or 0
+        self.reasoning += (metadata.get("output_token_details") or {}).get("reasoning", 0) or 0
+
+    @property
+    def embedded(self) -> int:
+        # Includes background indexing that finished during this turn.
+        return max(0, _embedding_tokens() - self.embed_start)
+
+    def summary(self) -> str:
+        total = self.input + self.output + self.embedded
+        self.turns += 1
+        self.session_total += total
+
+        parts = [
+            f"{self.calls} call{'s' if self.calls != 1 else ''}",
+            f"in {self.input:,}" + (f" ({self.cached:,} cached)" if self.cached else ""),
+            f"out {self.output:,}" + (f" ({self.reasoning:,} thinking)" if self.reasoning else ""),
+        ]
+        if self.embedded:
+            parts.append(f"embed {self.embedded:,}")
+        parts.append(f"turn {total:,}")
+        parts.append(f"session {self.session_total:,}")
+        return "  [tokens] " + " · ".join(parts)
+
+
+def _embedding_tokens() -> int:
+    try:
+        from .rag.embeddings import tokens_used
+
+        return tokens_used()
+    except Exception:  # noqa: BLE001 - accounting must never break a turn
+        return 0
+
+
 def _format_result(text: str, limit: int = 6) -> str:
     lines = text.splitlines() or [text]
     shown = lines[:limit]
@@ -96,10 +161,11 @@ class Printer:
         self.section = None
 
 
-def _run_turn(app, question: str, config: dict) -> None:
+def _run_turn(app, question: str, config: dict, usage: Usage) -> None:
     print()
     printer = Printer()
     seen_calls: set[str] = set()
+    usage.start_turn()
 
     for mode, payload in app.stream(
         {"messages": [{"role": "user", "content": question}]},
@@ -122,6 +188,8 @@ def _run_turn(app, question: str, config: dict) -> None:
             for node, update in (payload or {}).items():
                 for message in (update or {}).get("messages", []):
                     if node == "agent" and isinstance(message, AIMessage):
+                        # One entry per model call; the loop makes several.
+                        usage.record(message.usage_metadata)
                         for call in message.tool_calls or []:
                             key = call.get("id") or _format_call(call)
                             if key not in seen_calls:
@@ -131,6 +199,7 @@ def _run_turn(app, question: str, config: dict) -> None:
                         printer.tool_result(str(message.content))
 
     printer.finish()
+    print(dim(usage.summary()) + "\n")
 
 
 def _shutdown() -> None:
@@ -154,6 +223,7 @@ def main() -> int:
 
     app = build_app(checkpointer=InMemorySaver())
     config = {"configurable": {"thread_id": str(uuid.uuid4())}}
+    usage = Usage()
 
     mode = "reasoning on" if settings.reasoning_enabled else "reasoning off"
     try:
@@ -185,7 +255,7 @@ def main() -> int:
                 continue
 
             try:
-                _run_turn(app, question, config)
+                _run_turn(app, question, config, usage)
             except KeyboardInterrupt:
                 print(dim("\n(interrupted)\n"))
             except Exception as exc:  # noqa: BLE001 - keep the REPL alive

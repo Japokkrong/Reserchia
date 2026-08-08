@@ -170,6 +170,37 @@ Both UIs share `turn.py`, so neither has its own opinion about what the graph's 
 means — the rules for it (tool results also arrive on the `messages` channel, tool calls repeat
 across chunks, usage arrives once per model call) live in one place.
 
+### Branding
+
+The artwork in `public/Icon.jpeg` replaces Chainlit's default logo. It is served through three
+paths Chainlit resolves by filename, so there is no config beyond `avatar_size`:
+
+| File | Where it shows |
+|---|---|
+| `public/avatars/reserchia.png` | beside every assistant message (name from `[UI] name`, lowercased) |
+| `public/favicon.png` | browser tab, and the fallback for any avatar with no file |
+| `public/logo_light.png`, `logo_dark.png` | header logo slot |
+
+The avatar is a **square centre crop**, not the original banner: Chainlit's `AvatarImage` is
+`aspect-square` with `object-fit: fill`, so a 16:9 source would be squashed rather than cropped.
+Regenerate them from the source with an ephemeral Pillow — no runtime dependency, since the
+output is a static file:
+
+```bash
+uv run --with pillow python - <<'PY'
+from PIL import Image
+src = Image.open("public/Icon.jpeg").convert("RGB"); w, h = src.size
+side = min(w, h); sq = src.crop(((w-side)//2, 0, (w-side)//2+side, h))
+sq.resize((128, 128), Image.LANCZOS).save("public/avatars/reserchia.png", optimize=True)
+sq.resize((64, 64), Image.LANCZOS).save("public/favicon.png", optimize=True)
+for t in ("light", "dark"):
+    src.resize((512, int(512*h/w)), Image.LANCZOS).save(f"public/logo_{t}.png", optimize=True)
+PY
+```
+
+Sizes are matched to how they actually render (the avatar is 32 px, at 2× for high-DPI). The
+first pass shipped a 512 px, 500 KB file for a 20 px slot.
+
 ### The one fragile thing: how citations become clickable
 
 Chainlit's `prepareContent` scans a finished message for **element names as plain text** and

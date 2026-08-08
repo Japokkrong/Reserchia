@@ -98,7 +98,7 @@ reaction_on_message_received = false
 
 [UI]
 # Name of the assistant.
-name = "Assistant"
+name = "Reserchia"
 
 # default_theme = "dark"
 
@@ -161,8 +161,9 @@ logo_file_url = ""
 # Load assistant avatar image directly from URL.
 default_avatar_file_url = ""
 
-# Avatar size in pixels (default: 20).
-# avatar_size = 20
+# Avatar size in pixels (default: 20). Raised because the avatar is artwork
+# rather than a monogram -- at 20 px the character is an unreadable smudge.
+avatar_size = 32
 
 # Specify a custom build directory for the frontend.
 # This can be used to customize the frontend code.

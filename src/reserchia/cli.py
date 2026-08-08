@@ -10,6 +10,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 
 from .agent import build_app
 from .config import ConfigError, get_settings
+from . import visuals
 from .rag import ingest
 from .rag.store import count as rag_count
 from .tools.rag_tools import list_paper_library
@@ -103,6 +104,7 @@ def _run_turn(app, question: str, config: dict, usage: Usage) -> None:
     printer = Printer()
     state = StreamState()
     usage.start_turn()
+    visuals.start_turn()
 
     for mode, payload in app.stream(
         {"messages": [{"role": "user", "content": question}]},
@@ -120,7 +122,29 @@ def _run_turn(app, question: str, config: dict, usage: Usage) -> None:
                 printer.tool_result(event.content)
 
     printer.finish()
+    _show_visuals()
     print(dim("  [tokens] " + usage.finish_turn()) + "\n")
+
+
+def _show_visuals() -> None:
+    """A terminal cannot draw, so show the source and where the render landed.
+
+    The PNG was produced anyway -- rendering is how the diagram gets validated --
+    so printing its path costs nothing and makes the work usable.
+    """
+    shown = visuals.take()
+    for diagram in shown.diagrams:
+        print(cyan(f"  [diagram] {diagram.caption or 'untitled'}"))
+        for line in diagram.source.splitlines():
+            print(dim(f"    {line}"))
+        if diagram.path:
+            print(dim(f"    -> {diagram.path}"))
+        print()
+    for equation in shown.equations:
+        label = f" — {equation.caption}" if equation.caption else ""
+        print(cyan(f"  [equation ({equation.number})]{label}"))
+        print(dim(f"    {equation.latex}"))
+        print()
 
 
 def _shutdown() -> None:

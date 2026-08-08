@@ -31,6 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from reserchia.agent import build_app  # noqa: E402
 from reserchia.config import ConfigError, get_settings  # noqa: E402
+from reserchia import visuals  # noqa: E402
 from reserchia.rag import citations, ingest, store  # noqa: E402
 from reserchia.turn import (  # noqa: E402
     Reasoning,
@@ -148,6 +149,23 @@ def link_citations(text: str) -> tuple[str, dict[str, str]]:
     return CITATION.sub(replace, text), passages
 
 
+def _diagrams(drawn) -> list[cl.Image]:
+    """Rendered diagrams, shown under the answer.
+
+    `display="inline"` rather than "side": a diagram is the point of the answer,
+    not a reference to check, so it should be visible without a click.
+    """
+    return [
+        cl.Image(
+            name=diagram.caption or f"diagram-{index + 1}",
+            content=diagram.png,
+            display="inline",
+            size="large",
+        )
+        for index, diagram in enumerate(drawn)
+    ]
+
+
 def _elements(passages: dict[str, str]) -> list[cl.Text]:
     """Wrap resolved passages as side-panel elements.
 
@@ -171,6 +189,7 @@ async def on_message(message: cl.Message) -> None:
     config = {"configurable": {"thread_id": cl.user_session.get("thread_id")}}
     state = StreamState()
     usage.start_turn()
+    visuals.start_turn()
 
     answer = cl.Message(content="")
     # Keyed by call id, not name: one turn can call the same tool twice -- a
@@ -228,9 +247,25 @@ async def on_message(message: cl.Message) -> None:
             await close(step, "(no result)")
 
     linked, passages = link_citations("".join(body))
-    answer.content = f"{linked}\n\n---\n*{usage.finish_turn()}*"
-    answer.elements = _elements(passages)
+    shown = visuals.take()
+
+    # Equations go into the content as $$...$$ so KaTeX typesets them -- better
+    # than an image in every way that matters here: selectable, theme-aware and
+    # sharp at any zoom. Diagrams have no such option and become images.
+    blocks = [linked]
+    for equation in shown.equations:
+        label = f" — {equation.caption}" if equation.caption else ""
+        blocks.append(f"$$\n{equation.latex}\n$$\n\n*({equation.number}){label}*")
+
+    answer.content = "\n\n".join(blocks)
+    answer.elements = _elements(passages) + _diagrams(shown.diagrams)
     await answer.update()
+
+    # The footer goes in its own message rather than at the end of this one.
+    # Chainlit always renders elements after a message's content, so a diagram
+    # would otherwise appear *below* the token line -- which reads as though the
+    # answer had ended before the picture arrived.
+    await cl.Message(content=f"*{usage.finish_turn()}*").send()
 
 
 @cl.on_chat_end

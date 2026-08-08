@@ -27,7 +27,10 @@ allow_origins = ["*"]
 unsafe_allow_html = false
 
 # Process and display mathematical expressions. This can clash with "$" characters in messages.
-latex = false
+# On for Reserchia: retrieved arXiv passages keep their LaTeX (the LaTeXML tier
+# preserves $d_{\text{model}}$ verbatim), so with this off the citation panels
+# show raw source. The "$" clash is a fair trade for a corpus of physics and ML papers.
+latex = true
 
 # Enable rendering of user messages markdown
 user_message_markdown = true

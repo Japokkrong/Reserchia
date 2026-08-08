@@ -61,6 +61,47 @@ Counts come from the provider's own `usage` field, not an estimate. Cost is not 
 reports it, but `langchain_openai` discards the field before it reaches us — the same class of
 gap that `llm.py` works around for reasoning.
 
+## Diagrams and equations
+
+Papers are full of things prose is bad at — pipelines, architectures, training stages, the
+formula a method turns on. Two tools let the agent show them instead of describing them:
+
+| Tool | For |
+|---|---|
+| `render_diagram(mermaid, caption=)` | structure worth seeing: a pipeline, an architecture, a multi-stage process |
+| `render_equation(latex, caption=)` | a display equation, captioned and numbered |
+
+![Diagram and equation rendering](docs/chainlit-visuals.png)
+
+Ordinary inline maths needs no tool — `$d_k$` is typeset automatically, in answers *and* in
+citation side panels, which matters because retrieved arXiv passages keep their original LaTeX.
+That is the `latex = true` flag in `.chainlit/config.toml`; Chainlit ships KaTeX but leaves it
+off by default.
+
+The prompt is written as *when*, not *that*, because the failure mode is an agent that draws two
+boxes for every answer. A plain factual question still comes back as one sentence.
+
+**Rendering is the validation.** Mermaid's grammar is large and its parser is JavaScript, so a
+Python check would be a heuristic that still waves through diagrams mermaid rejects. Diagrams go
+to [Kroki](https://kroki.io), which runs the real parser and hands back its error verbatim —
+
+```
+Diagram not rendered, mermaid rejected it: Error 400: SyntaxError:
+Parse error on line 3: ...lowchart TD  A --> ---------------------^
+```
+
+— so the model can fix it and retry *before* the answer is written. That is also why the render
+is eager rather than deferred to the UI: a lazy render would surface the error too late to act
+on. PNGs are cached under `<store_dir>/diagrams/<sha256>.png`, so a repeat costs nothing.
+
+**This sends the diagram source to kroki.io.** It is model-authored text about public papers,
+not your data, but it is an outbound call and you should know it happens. The local alternative,
+`@mermaid-js/mermaid-cli`, needs a headless Chromium (~200 MB) — rejected as too much weight for
+one feature.
+
+In the terminal, which cannot draw, the CLI prints the mermaid source and the path of the PNG
+that was rendered anyway.
+
 ## Web UI
 
 A second front end over the same agent and the same library:
@@ -132,6 +173,8 @@ history, assistant messages included.
 | `tools/datetime_tools.py` | `get_current_datetime` |
 | `tools/arxiv_tools.py` | The four arXiv tools |
 | `tools/rag_tools.py` | `search_paper_library`, `list_paper_library` |
+| `visuals.py` | Mermaid rendering, LaTeX checking, per-turn visual registry |
+| `tools/visual_tools.py` | `render_diagram`, `render_equation` |
 | `tools/__init__.py` | `TOOLS` registry |
 | `agent.py` | The `StateGraph` |
 | `cli.py` | The REPL |

@@ -11,6 +11,7 @@ from .arxiv_tools import (
 )
 from .datetime_tools import get_current_datetime
 from .rag_tools import list_paper_library, search_paper_library
+from .visual_tools import render_diagram, render_equation
 
 TOOLS = [
     get_current_datetime,
@@ -22,6 +23,9 @@ TOOLS = [
     search_paper_library,
     list_paper_library,
     get_arxiv_fulltext,
+    # Presentation, not retrieval: these show what the others found.
+    render_diagram,
+    render_equation,
 ]
 
 __all__ = [
@@ -31,6 +35,8 @@ __all__ = [
     "get_arxiv_paper",
     "get_current_datetime",
     "list_paper_library",
+    "render_diagram",
+    "render_equation",
     "search_arxiv",
     "search_paper_library",
 ]

@@ -116,11 +116,14 @@ name = "Reserchia"
 # Default state of chat settings sidebar when location is "sidebar"
 # default_chat_settings_open = false
 
-# Whether to prompt user confirmation on clicking 'New Chat'
-confirm_new_chat = true
+# Whether to prompt user confirmation on clicking 'New Chat'.
+# Off: the warning says starting a new chat "will clear your current chat
+# history", which is no longer true -- conversations are persisted to Postgres
+# and stay in the sidebar. Confirming a loss that does not happen is just noise.
+confirm_new_chat = false
 
 # Description of the assistant. This is used for HTML tags.
-# description = ""
+description = "A self-hosted research assistant that reads arXiv papers once, remembers them, and answers with citations you can check."
 
 # Chain of Thought (CoT) display mode. Can be "hidden", "tool_call" or "full".
 cot = "full"

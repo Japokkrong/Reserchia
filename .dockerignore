@@ -1,0 +1,33 @@
+# The build context is sent to the daemon in full, so what is excluded here is
+# mostly about speed. `rag-eda/data` alone is ~182 MB of Chroma index and cached
+# vectors that the image has no use for.
+
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+.git/
+.github/
+
+# Experiment artefacts: regenerable, and large.
+rag-eda/data/chroma/
+rag-eda/data/embedding-cache/
+rag-eda/data/chunks/
+rag-eda/figures/
+
+# Secrets do not go in the image. The app reads them from the environment,
+# supplied by compose's env_file at run time.
+.env
+
+# Chainlit's runtime scratch, and local logs.
+.files/
+.chainlit/translations/
+docs/
+scripts/
+*.log
+
+# Editor and OS noise.
+.vscode/
+.idea/
+.DS_Store

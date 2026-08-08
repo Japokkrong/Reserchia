@@ -1,0 +1,101 @@
+# Reserchia: web UI, thread storage, and file storage.
+#
+#   docker compose up -d --build     start (and from then on, every boot)
+#   docker compose logs -f app       follow
+#   docker compose down              stop, keeping volumes
+#
+# `restart: unless-stopped` is what makes this come back after a reboot. It
+# works because the Docker daemon is enabled at boot on this machine
+# (`systemctl is-enabled docker` -> enabled); if that ever changes, nothing here
+# will start and the cause will not be obvious.
+
+name: reserchia
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-reserchia}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-reserchia}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Runs once, on an empty data directory. Editing it later has no effect --
+      # the volume has to be dropped for changes to apply.
+      - ./docker/schema.sql:/docker-entrypoint-initdb.d/10-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-reserchia} -d ${POSTGRES_DB:-reserchia}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    # Not published: only the app talks to it, over the compose network.
+
+  rustfs:
+    # Pinned rather than :latest -- RustFS is at 1.0.0-beta.12, and a beta that
+    # moves under a running stack is how stored objects go missing.
+    image: rustfs/rustfs:1.0.0-beta.12
+    restart: unless-stopped
+    security_opt:
+      - "no-new-privileges:true"
+    environment:
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ENABLE: "false"
+      RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:?set RUSTFS_ACCESS_KEY in .env}
+      RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY:?set RUSTFS_SECRET_KEY in .env}
+    volumes:
+      - rustfsdata:/data
+    ports:
+      # Published because the *browser* fetches stored files directly, via
+      # presigned URLs. Without this the app could upload but the page could
+      # not read back -- `rustfs` resolves on the compose network only, so the
+      # browser gets ERR_NAME_NOT_RESOLVED. Localhost-only, like the app.
+      - "127.0.0.1:19000:9000"
+    healthcheck:
+      # /health, not / -- the root is S3 ListBuckets, which answers 403 without
+      # a signed request, and `curl -f` treats that as a failure. Probed: /
+      # -> 403, /health -> 200.
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9000/health -o /dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  app:
+    build:
+      context: .
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rustfs:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      # Overrides whatever .env says, because inside the container these are
+      # service names on the compose network, not localhost.
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-reserchia}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-reserchia}
+      # Two endpoints, and they are not interchangeable. The app uploads over
+      # the compose network; the browser downloads over the published port.
+      RUSTFS_ENDPOINT: http://rustfs:9000
+      RUSTFS_PUBLIC_ENDPOINT: ${RUSTFS_PUBLIC_ENDPOINT:-http://localhost:19000}
+      RUSTFS_BUCKET: ${RUSTFS_BUCKET:-reserchia}
+      RESERCHIA_STORE_DIR: /data
+      RESERCHIA_LOG_DIR: /data/logs
+      CHAINLIT_AUTH_SECRET: ${CHAINLIT_AUTH_SECRET:?generate one -- see .env.example}
+    ports:
+      # 127.0.0.1 on purpose. Authentication is passwordless, so this binding is
+      # the only thing keeping the app off the network. Changing it to
+      # "18000:8000" hands anyone on the LAN your API keys.
+      - "127.0.0.1:18000:8000"
+    volumes:
+      # The existing library, shared with the host CLI: papers indexed either way
+      # are visible to both.
+      - ${HOME}/.local/share/reserchia:/data
+
+volumes:
+  pgdata:
+  rustfsdata:

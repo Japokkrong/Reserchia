@@ -1,7 +1,7 @@
 [project]
 name = "reserchia"
 version = "0.1.0"
-description = "A LangGraph agent running on DeepSeek V4 Flash"
+description = "A self-hosted research assistant that reads arXiv papers once, remembers them, and answers with citations you can check."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -32,5 +32,10 @@ eda = [
     "tokenizers>=0.23.1",
 ]
 ui = [
+    "aiohttp>=3.14.3",
+    "asyncpg>=0.30",
+    "boto3>=1.34.73",
     "chainlit>=2.11.1",
+    "greenlet>=3.5.4",
+    "sqlalchemy>=2.0.28",
 ]

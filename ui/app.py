@@ -26,14 +26,16 @@ import dataclasses
 from pathlib import Path
 
 import chainlit as cl
+from chainlit.types import ThreadDict
 
+from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.checkpoint.memory import InMemorySaver
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from reserchia.agent import build_app  # noqa: E402
 from reserchia.config import ConfigError, get_settings  # noqa: E402
-from reserchia import observability, visuals  # noqa: E402
+from reserchia import observability, persistence, visuals  # noqa: E402
 from reserchia.rag import citations, ingest, store  # noqa: E402
 from reserchia.turn import (  # noqa: E402
     Reasoning,
@@ -130,6 +132,38 @@ def _agent_for(on: bool):
     return app
 
 
+if persistence.enabled():
+
+    @cl.data_layer
+    def _data_layer():
+        """Threads to Postgres, files to RustFS. Only when DATABASE_URL is set."""
+        return persistence.data_layer()
+
+    @cl.header_auth_callback
+    def _auth(headers) -> cl.User | None:
+        """Identify, rather than authenticate.
+
+        Chainlit will not list threads without a user, and this returns the same
+        one unconditionally -- no login page. It is only reasonable because
+        compose publishes the port on 127.0.0.1; on any other interface this is
+        an open door.
+        """
+        return cl.User(identifier=persistence.LOCAL_USER)
+
+
+async def _begin(thread_id: str | None = None) -> None:
+    """Session state shared by a new chat and a resumed one."""
+    settings = get_settings()
+    cl.user_session.set("saver", InMemorySaver())
+    # Reuse the persisted thread's id so the checkpointer and the stored
+    # transcript agree on which conversation this is.
+    cl.user_session.set("thread_id", thread_id or str(uuid.uuid4()))
+    cl.user_session.set("usage", Usage())
+    cl.user_session.set("reasoning_on", None)
+    _agent_for(settings.reasoning_enabled)
+    await cl.context.emitter.set_commands(_commands(settings.reasoning_enabled))
+
+
 @cl.on_chat_start
 async def start() -> None:
     try:
@@ -138,14 +172,49 @@ async def start() -> None:
         await cl.Message(content=f"**Configuration error**\n\n```\n{exc}\n```").send()
         return
 
-    cl.user_session.set("saver", InMemorySaver())
-    cl.user_session.set("thread_id", str(uuid.uuid4()))
-    cl.user_session.set("usage", Usage())
-    cl.user_session.set("reasoning_on", None)
-    _agent_for(settings.reasoning_enabled)
-
-    await cl.context.emitter.set_commands(_commands(settings.reasoning_enabled))
+    await _begin()
     await cl.Message(content=_greeting()).send()
+
+
+@cl.on_chat_resume
+async def resume(thread: ThreadDict) -> None:
+    """Reopen a stored conversation, and give the agent its memory back.
+
+    Chainlit redraws the transcript from Postgres on its own. That is only half
+    of it: the graph's checkpointer starts empty, so without this the user would
+    be looking at a full conversation while the agent saw an empty one, and the
+    first follow-up would answer as if nothing had been said.
+
+    Replaying the stored user and assistant turns into the checkpointer under
+    the thread's own id closes that gap. Tool calls and reasoning are not
+    replayed -- only the conversation as the user sees it -- which is enough for
+    context and avoids resurrecting `reasoning_details` that may no longer match
+    the current mode.
+    """
+    try:
+        get_settings()
+    except ConfigError as exc:
+        await cl.Message(content=f"**Configuration error**\n\n```\n{exc}\n```").send()
+        return
+
+    await _begin(thread_id=thread.get("id"))
+
+    history = []
+    for step in thread.get("steps") or []:
+        kind, text = step.get("type"), (step.get("output") or "").strip()
+        if not text:
+            continue
+        if kind == "user_message":
+            history.append(HumanMessage(content=text))
+        elif kind == "assistant_message":
+            # Strip the token footer; it is display furniture, and feeding it
+            # back would have the model treat its own accounting as content.
+            history.append(AIMessage(content=_without_footer(text)))
+
+    if history:
+        app = cl.user_session.get("app")
+        config = {"configurable": {"thread_id": cl.user_session.get("thread_id")}}
+        await app.aupdate_state(config, {"messages": history})
 
 
 def link_citations(text: str) -> tuple[str, dict[str, str]]:
@@ -196,6 +265,15 @@ def link_citations(text: str) -> tuple[str, dict[str, str]]:
         return label
 
     return CITATION.sub(replace, text), passages
+
+
+#: The usage footer this UI appends after each answer, e.g.
+#: "2 calls · in 9,703 (8,192 cached) · out 166 · turn 9,875 · session 22,726".
+_FOOTER = re.compile(r"\n*-{3,}\n*\*?\d+ calls? · .*$", re.S)
+
+
+def _without_footer(text: str) -> str:
+    return _FOOTER.sub("", text).strip()
 
 
 def _diagrams(drawn) -> list[cl.Image]:

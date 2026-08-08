@@ -7,7 +7,7 @@ from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
-from .config import get_settings
+from .config import Settings, get_settings
 from .llm import build_llm
 from .tools import TOOLS
 
@@ -75,13 +75,21 @@ Answer conversationally and concisely. Do not read tool output back verbatim; \
 state the answer the user actually asked for."""
 
 
-def build_app(checkpointer: BaseCheckpointSaver | None = None):
+def build_app(
+    checkpointer: BaseCheckpointSaver | None = None,
+    settings: Settings | None = None,
+):
     """Compile the agent graph.
 
     Built lazily so that importing this module does not require an API key --
     only calling this does.
+
+    `settings` overrides the environment, which is what lets the UI flip
+    reasoning mid-conversation: rebuild with an adjusted `Settings` and pass the
+    *same* checkpointer, and the conversation survives the swap because the
+    history lives in the checkpointer rather than in the compiled graph.
     """
-    llm = build_llm(get_settings()).bind_tools(TOOLS)
+    llm = build_llm(settings or get_settings()).bind_tools(TOOLS)
 
     def call_model(state: MessagesState) -> dict:
         messages = [SystemMessage(SYSTEM_PROMPT), *state["messages"]]

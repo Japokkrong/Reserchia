@@ -152,6 +152,15 @@ uv run reserchia-ui          # or: chainlit run ui/app.py
 
 ![Chainlit UI](docs/chainlit-ui.png)
 
+- **Reasoning is a one-click toggle** — the brain button beside the paperclip. It is a Chainlit
+  *command* with `button` and `persistent` set, so it latches as a mode and its state arrives as
+  `message.command` on every turn. Reading it there, rather than in a settings callback, means
+  the mode can never disagree with the button the user is looking at.
+
+  Flipping it rebuilds the agent with `reasoning` swapped and hands it the *same* checkpointer,
+  so the conversation survives — verified by toggling mid-chat and asking a question that needs
+  the earlier turn. That works only because `llm.py` strips stale `reasoning_details` when
+  reasoning goes off; without it, replaying a history recorded with reasoning on would 400.
 - **Citations are clickable** — `arXiv:2404.16130 §3.1` opens the passage the claim came from,
   with its section heading and relevance score.
 - **Tool calls are collapsible steps** showing the JSON arguments and the result.

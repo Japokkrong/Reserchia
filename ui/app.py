@@ -22,9 +22,11 @@ from __future__ import annotations
 import re
 import sys
 import uuid
+import dataclasses
 from pathlib import Path
 
 import chainlit as cl
+
 from langgraph.checkpoint.memory import InMemorySaver
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
@@ -85,17 +87,64 @@ def _greeting() -> str:
     return "\n".join(lines)
 
 
+#: A one-click toggle in the composer, beside the upload button. `button` puts
+#: it there rather than in the slash-command list, and `persistent` makes it
+#: latch instead of applying to a single message -- so it reads as a mode, which
+#: is what it is. Its state arrives as `message.command` on every turn.
+REASONING_COMMAND = "Reasoning"
+
+
+def _commands(on: bool) -> list[dict]:
+    return [
+        {
+            "id": REASONING_COMMAND,
+            "icon": "brain",
+            "description": (
+                "Think before answering — slower, more tokens, "
+                "and the thinking is shown as its own step"
+            ),
+            "button": True,
+            "persistent": True,
+            "selected": on,
+        }
+    ]
+
+
+def _agent_for(on: bool):
+    """The agent with reasoning on or off, rebuilt only when the mode changes.
+
+    Reasoning is fixed at construction -- it decides the `reasoning` block sent
+    to OpenRouter and whether `ChatOpenRouter` replays `reasoning_details` -- so
+    flipping it means a new graph. The conversation survives because the history
+    lives in the checkpointer, and the same saver and thread id are reused.
+    """
+    if cl.user_session.get("reasoning_on") == on:
+        return cl.user_session.get("app")
+
+    settings = dataclasses.replace(
+        get_settings(), reasoning="enabled" if on else "disabled"
+    )
+    app = build_app(checkpointer=cl.user_session.get("saver"), settings=settings)
+    cl.user_session.set("app", app)
+    cl.user_session.set("reasoning_on", on)
+    return app
+
+
 @cl.on_chat_start
 async def start() -> None:
     try:
-        get_settings()
+        settings = get_settings()
     except ConfigError as exc:
         await cl.Message(content=f"**Configuration error**\n\n```\n{exc}\n```").send()
         return
 
-    cl.user_session.set("app", build_app(checkpointer=InMemorySaver()))
+    cl.user_session.set("saver", InMemorySaver())
     cl.user_session.set("thread_id", str(uuid.uuid4()))
     cl.user_session.set("usage", Usage())
+    cl.user_session.set("reasoning_on", None)
+    _agent_for(settings.reasoning_enabled)
+
+    await cl.context.emitter.set_commands(_commands(settings.reasoning_enabled))
     await cl.Message(content=_greeting()).send()
 
 
@@ -180,10 +229,14 @@ def _elements(passages: dict[str, str]) -> list[cl.Text]:
 
 @cl.on_message
 async def on_message(message: cl.Message) -> None:
-    app = cl.user_session.get("app")
-    if app is None:
+    if cl.user_session.get("saver") is None:
         await cl.Message(content="Not configured — check OPENROUTER_API_KEY.").send()
         return
+
+    # The toggle's state rides in on every message: the command id while it is
+    # latched on, absent while off. Reading it here rather than in a callback
+    # means the mode can never disagree with the button the user is looking at.
+    app = _agent_for(message.command == REASONING_COMMAND)
 
     usage: Usage = cl.user_session.get("usage")
     config = {"configurable": {"thread_id": cl.user_session.get("thread_id")}}

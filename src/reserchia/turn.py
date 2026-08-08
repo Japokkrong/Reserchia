@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 
 from langchain_core.messages import AIMessage, ToolMessage
 
-from .llm import reasoning_text
+from .llm import COST_KEY, reasoning_text
 
 
 @dataclass(frozen=True)
@@ -100,7 +100,10 @@ def interpret(mode: str, payload, state: StreamState, usage: "Usage") -> list[Ev
         for message in (update or {}).get("messages", []):
             if node == "agent" and isinstance(message, AIMessage):
                 # One usage record per model call, and a turn makes several.
-                usage.record(message.usage_metadata)
+                usage.record(
+                    message.usage_metadata,
+                    (message.additional_kwargs or {}).get(COST_KEY),
+                )
                 for call in message.tool_calls or []:
                     name = call.get("name", "tool")
                     call_id = call.get("id") or f"{name}:{call.get('args')}"
@@ -149,12 +152,17 @@ class Usage:
         self.output = 0
         self.cached = 0
         self.reasoning = 0
+        #: Real billed cost from OpenRouter, not an estimate. 0.0 when the
+        #: provider did not report one.
+        self.cost = 0.0
         self.embed_start = embedding_tokens()
 
     def start_turn(self) -> None:
         self._reset()
 
-    def record(self, metadata: dict | None) -> None:
+    def record(self, metadata: dict | None, cost: float | None = None) -> None:
+        if cost:
+            self.cost += float(cost)
         if not metadata:
             return
         self.calls += 1
@@ -184,6 +192,7 @@ class Usage:
             *([f"embed {self.embedded:,}"] if self.embedded else []),
             f"turn {self.turn_total:,}",
             f"session {self.session_total:,}",
+            *([f"${self.cost:.5f}"] if self.cost else []),
         ]
 
     def finish_turn(self) -> str:

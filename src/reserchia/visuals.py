@@ -28,6 +28,7 @@ from pathlib import Path
 import httpx
 
 from .config import get_settings
+from .observability import track
 
 KROKI_URL = "https://kroki.io/mermaid/png"
 TIMEOUT = 45.0
@@ -145,10 +146,13 @@ def render_mermaid(source: str) -> tuple[bytes, Path] | str:
     digest = hashlib.sha256(text.encode()).hexdigest()
     cached = _cache_dir() / f"{digest}.png"
     if cached.exists():
-        return cached.read_bytes(), cached
+        with track("kroki.render", "tool", cache="hit"):
+            return cached.read_bytes(), cached
 
     try:
-        response = httpx.post(KROKI_URL, content=text.encode(), timeout=TIMEOUT)
+        with track("kroki.render", "tool", cache="miss") as span:
+            response = httpx.post(KROKI_URL, content=text.encode(), timeout=TIMEOUT)
+            span.set(status=response.status_code, bytes=len(response.content))
     except httpx.RequestError as exc:
         return (
             f"Diagram not rendered: could not reach the renderer "

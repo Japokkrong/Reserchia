@@ -34,6 +34,7 @@ from html.parser import HTMLParser
 import httpx
 
 from .arxiv_client import client, throttle
+from .observability import track
 
 HTML_URL = "https://arxiv.org/html/{}"
 AR5IV_URL = "https://ar5iv.labs.arxiv.org/html/{}"
@@ -274,9 +275,11 @@ def _download(url: str) -> Fetched | str:
     Streamed rather than buffered so an unexpectedly huge conversion is
     abandoned partway instead of after it has all arrived.
     """
-    throttle()
+    with track("arxiv.throttle", "tool"):
+        throttle()
     try:
-        with client.stream("GET", url) as response:
+        with track("arxiv.download", "tool", url=url.rsplit("/", 2)[-2]) as span, \
+                client.stream("GET", url) as response:
             body = bytearray()
             for chunk in response.iter_bytes():
                 body.extend(chunk)
@@ -285,6 +288,7 @@ def _download(url: str) -> Fetched | str:
                         f"Error: {url} is larger than "
                         f"{MAX_BYTES // (1024 * 1024)} MB; refusing to load it."
                     )
+            span.set(status=response.status_code, bytes=len(body))
             return Fetched(
                 status=response.status_code,
                 url=str(response.url),

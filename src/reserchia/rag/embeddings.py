@@ -17,6 +17,7 @@ import time
 from openai import OpenAI
 
 from ..config import Settings, get_settings
+from ..observability import track
 
 DIMENSIONS = 1024
 
@@ -99,8 +100,10 @@ def embed(texts: list[str], settings: Settings | None = None) -> list[list[float
 
     vectors: list[list[float]] = []
     for batch in _batches(texts):
-        response = _call(client, settings.embed_model, batch)
-        _record(response)
+        with track("embed", "embedding", items=len(batch)) as span:
+            response = _call(client, settings.embed_model, batch)
+            _record(response)
+            span.set(chars=sum(len(t) for t in batch))
         # `data` carries an explicit index; do not trust list order.
         for item in sorted(response.data, key=lambda item: item.index):
             if len(item.embedding) != DIMENSIONS:

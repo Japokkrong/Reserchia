@@ -38,6 +38,8 @@ from dataclasses import dataclass
 
 import httpx
 
+from .observability import track
+
 API_URL = "https://export.arxiv.org/api/query"
 
 #: arXiv terms of use: one request per three seconds, one connection.
@@ -124,9 +126,14 @@ def fetch(params: dict) -> Results | str:
     the tools above can hand the message straight to the model and let it
     correct itself on the next turn.
     """
-    throttle()
+    # Split deliberately: a three-second wait for arXiv's rate limit is not
+    # a slow API, and lumping them together would say the opposite.
+    with track("arxiv.throttle", "tool"):
+        throttle()
     try:
-        response = client.get(API_URL, params=params)
+        with track("arxiv.request", "tool") as span:
+            response = client.get(API_URL, params=params)
+            span.set(status=response.status_code, bytes=len(response.content))
     except httpx.RequestError as exc:
         return (
             f"Error: could not reach the arXiv API ({type(exc).__name__}). "

@@ -10,7 +10,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 
 from .agent import build_app
 from .config import ConfigError, get_settings
-from . import visuals
+from . import observability, visuals
 from .rag import ingest
 from .rag.store import count as rag_count
 from .tools.rag_tools import list_paper_library
@@ -105,6 +105,7 @@ def _run_turn(app, question: str, config: dict, usage: Usage) -> None:
     state = StreamState()
     usage.start_turn()
     visuals.start_turn()
+    observability.start_turn(question)
 
     for mode, payload in app.stream(
         {"messages": [{"role": "user", "content": question}]},
@@ -123,7 +124,9 @@ def _run_turn(app, question: str, config: dict, usage: Usage) -> None:
 
     printer.finish()
     _show_visuals()
-    print(dim("  [tokens] " + usage.finish_turn()) + "\n")
+    line = usage.finish_turn()
+    observability.finish_turn(usage)
+    print(dim("  [tokens] " + line) + "\n")
 
 
 def _show_visuals() -> None:
@@ -177,7 +180,7 @@ def main() -> int:
         library = 0
     shelf = f", {library} passages in library" if library else ""
     print(f"Reserchia — {settings.model} ({mode}{shelf})")
-    print(dim("Commands: /library to list papers, /reset to clear memory, /exit.\n"))
+    print(dim("Commands: /library, /stats, /reset to clear memory, /exit.\n"))
 
     try:
         while True:
@@ -194,6 +197,9 @@ def main() -> int:
             if question == "/reset":
                 config = {"configurable": {"thread_id": str(uuid.uuid4())}}
                 print(dim("Conversation memory cleared.\n"))
+                continue
+            if question == "/stats":
+                print(observability.stats_text() + "\n")
                 continue
             if question == "/library":
                 print(list_paper_library.invoke({}) + "\n")

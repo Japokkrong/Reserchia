@@ -19,6 +19,7 @@ import chromadb
 from chromadb.api.models.Collection import Collection
 
 from ..config import Settings, get_settings
+from ..observability import track
 from .chunking import Chunk
 
 COLLECTION = "papers"
@@ -122,14 +123,16 @@ def query_dense(
     if not total:
         return {}
     where = {"arxiv_id": base_id(arxiv_id)} if arxiv_id else None
-    result = collection(settings).query(
-        query_embeddings=[vector],
-        n_results=min(limit, total),
-        where=where,
-        include=["distances"],
-    )
-    ids = result["ids"][0]
-    distances = result["distances"][0]
+    with track("chroma.query", "retriever", corpus=total) as span:
+        result = collection(settings).query(
+            query_embeddings=[vector],
+            n_results=min(limit, total),
+            where=where,
+            include=["distances"],
+        )
+        ids = result["ids"][0]
+        distances = result["distances"][0]
+        span.set(hits=len(ids))
     # Cosine distance -> similarity, so both retrievers agree that bigger is better.
     return {cid: 1.0 - distance for cid, distance in zip(ids, distances)}
 

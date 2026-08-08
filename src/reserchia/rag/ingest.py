@@ -22,6 +22,7 @@ from concurrent.futures import wait as await_futures
 
 from ..arxiv_fulltext import Document, fetch_document
 from ..config import Settings, get_settings
+from ..observability import track
 from . import embeddings, lexical, store
 from .chunking import chunk_document
 
@@ -51,8 +52,9 @@ def ingest_paper(document: Document, settings: Settings | None = None) -> int:
     chunks = chunk_document(document)
     if not chunks:
         return 0
-    vectors = embeddings.embed([chunk.text for chunk in chunks], settings)
-    written = store.upsert(chunks, vectors, settings)
+    with track("ingest", "chain", paper=document.arxiv_id, chunks=len(chunks)):
+        vectors = embeddings.embed([chunk.text for chunk in chunks], settings)
+        written = store.upsert(chunks, vectors, settings)
     # BM25's idf depends on the whole corpus, so any write invalidates it.
     lexical.invalidate()
     return written

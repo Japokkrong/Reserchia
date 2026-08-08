@@ -31,7 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from reserchia.agent import build_app  # noqa: E402
 from reserchia.config import ConfigError, get_settings  # noqa: E402
-from reserchia import visuals  # noqa: E402
+from reserchia import observability, visuals  # noqa: E402
 from reserchia.rag import citations, ingest, store  # noqa: E402
 from reserchia.turn import (  # noqa: E402
     Reasoning,
@@ -190,6 +190,7 @@ async def on_message(message: cl.Message) -> None:
     state = StreamState()
     usage.start_turn()
     visuals.start_turn()
+    observability.start_turn(message.content)
 
     answer = cl.Message(content="")
     # Keyed by call id, not name: one turn can call the same tool twice -- a
@@ -265,7 +266,9 @@ async def on_message(message: cl.Message) -> None:
     # Chainlit always renders elements after a message's content, so a diagram
     # would otherwise appear *below* the token line -- which reads as though the
     # answer had ended before the picture arrived.
-    await cl.Message(content=f"*{usage.finish_turn()}*").send()
+    line = usage.finish_turn()
+    observability.finish_turn(usage)
+    await cl.Message(content=f"*{line}*").send()
 
 
 @cl.on_chat_end

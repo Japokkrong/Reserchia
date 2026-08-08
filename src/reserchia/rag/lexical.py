@@ -20,6 +20,7 @@ import threading
 
 from rank_bm25 import BM25Okapi
 
+from ..observability import track
 from . import store
 
 #: Model names and identifiers must survive tokenisation whole. PP-DocLayout-V3
@@ -62,7 +63,11 @@ def _index(arxiv_id: str | None) -> _Index:
         if cached is not None and (expected is None or cached.size == expected):
             return cached
 
-        index = _Index(store.fetch_all(arxiv_id))
+        # Rebuilt whenever an ingest invalidates the cache, and it grows
+        # with the library -- worth measuring separately from scoring.
+        with track("bm25.build", "retriever") as span:
+            index = _Index(store.fetch_all(arxiv_id))
+            span.set(docs=index.size)
         _cache[key] = index
         return index
 
@@ -72,9 +77,10 @@ def search(query: str, limit: int, arxiv_id: str | None = None) -> dict[str, flo
     index = _index(arxiv_id)
     if index.bm25 is None:
         return {}
-    scores = index.bm25.get_scores(tokenize(query))
-    ranked = sorted(zip(index.ids, scores), key=lambda pair: -pair[1])[:limit]
-    return {cid: float(score) for cid, score in ranked}
+    with track("bm25.score", "retriever", docs=index.size):
+        scores = index.bm25.get_scores(tokenize(query))
+        ranked = sorted(zip(index.ids, scores), key=lambda pair: -pair[1])[:limit]
+        return {cid: float(score) for cid, score in ranked}
 
 
 def rows_by_id(arxiv_id: str | None = None) -> dict[str, dict]:

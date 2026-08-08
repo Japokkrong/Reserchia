@@ -44,6 +44,13 @@ from pydantic import Field
 
 from .config import Settings
 
+#: OpenRouter reports what a call actually cost, in `usage.cost`, when the
+#: request asks for it. `langchain_openai` drops it -- the same class of gap
+#: this module already works around for reasoning. Worth rescuing because it is
+#: the *billed* figure; anything else would be an estimate from a price table
+#: that may not even list this model.
+COST_KEY = "openrouter_cost"
+
 #: Structured reasoning; what OpenRouter wants echoed back.
 DETAILS_KEY = "reasoning_details"
 #: Plaintext reasoning; used for display, and as passback fallback.
@@ -64,6 +71,26 @@ def _field(source: Any, name: str) -> Any:
         if isinstance(extra, dict):
             value = extra.get(name)
     return value
+
+
+def _cost(source: Any) -> float | None:
+    """The billed cost of a call, if OpenRouter reported one.
+
+    It arrives on `usage` as an extra field, which means it is in `model_extra`
+    on the pydantic response and a plain key on a streamed chunk dict.
+    """
+    usage = _field(source, "usage")
+    if usage is None:
+        return None
+    value = _field(usage, "cost")
+    if value is None:
+        extra = getattr(usage, "model_extra", None)
+        if isinstance(extra, dict):
+            value = extra.get("cost")
+    try:
+        return float(value) if value is not None else None
+    except (TypeError, ValueError):
+        return None
 
 
 def _to_fragments(details: Any) -> list[dict]:
@@ -130,6 +157,11 @@ class ChatOpenRouter(ChatOpenAI):
         generation_info: dict | None = None,
     ) -> ChatResult:
         result = super()._create_chat_result(response, generation_info)
+
+        cost = _cost(response)
+        if cost is not None and result.generations:
+            result.generations[0].message.additional_kwargs[COST_KEY] = cost
+
         choices = _field(response, "choices") or []
         for generation, choice in zip(result.generations, choices):
             message = _field(choice, "message")
@@ -159,6 +191,12 @@ class ChatOpenRouter(ChatOpenAI):
         )
         if generation_chunk is None:
             return None
+        # Usage, and so cost, arrives on the final chunk -- which carries no
+        # choices at all, so this has to run before the choices guard below.
+        cost = _cost(chunk)
+        if cost is not None:
+            generation_chunk.message.additional_kwargs[COST_KEY] = cost
+
         choices = chunk.get("choices") or []
         if not choices:
             return generation_chunk
@@ -242,6 +280,7 @@ def build_llm(settings: Settings) -> ChatOpenRouter:
         api_key=settings.api_key,
         temperature=settings.temperature,
         reasoning_enabled=settings.reasoning_enabled,
-        extra_body=settings.reasoning_body,
+        # `usage.include` is what makes OpenRouter report the billed cost.
+        extra_body={**settings.reasoning_body, "usage": {"include": True}},
         default_headers=settings.headers or None,
     )

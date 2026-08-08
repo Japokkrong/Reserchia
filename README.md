@@ -61,6 +61,45 @@ Counts come from the provider's own `usage` field, not an estimate. Cost is not 
 reports it, but `langchain_openai` discards the field before it reaches us — the same class of
 gap that `llm.py` works around for reasoning.
 
+## Where the time goes
+
+Every step is timed. `/stats` in the REPL, or `python scripts/log_report.py` over the log:
+
+```
+where the time goes  (0.9s measured of 10.0s total; the rest is the model)
+  step                  calls      total      mean   share
+  embed                     1       0.8s      840ms    8.4%
+  bm25.build                1       0.0s       22ms    0.2%
+  chroma.query              1       0.0s        8ms    0.1%
+  bm25.score                1       0.0s        1ms    0.0%
+```
+
+Timings always go to a local JSONL under `<store_dir>/logs/` — no account, no network. Setting
+`LANGSMITH_TRACING=true` additionally sends the whole trace tree to LangSmith; `langsmith` is
+already installed, being a dependency of `langchain-core`.
+
+**Both, rather than just LangSmith, for two reasons.** LangSmith traces LangChain runnables, so
+the steps that actually cost time — the bge-m3 round trip, Chroma, BM25, arXiv's rate limiter,
+Kroki — are invisible to it, being ordinary functions. And `/stats` cannot query a remote service
+with tracing off. So `observability.track()` feeds both from one measurement, and the
+sub-steps are added as explicit `langsmith.trace()` spans. Verified against the API: all eight
+appear in the trace tree with latencies matching the local log.
+
+Three details worth keeping:
+
+- **The throttle is timed separately from the request.** A three-second wait for arXiv's rate
+  limit is not a slow API, and one combined number would say the opposite.
+- **A dead key must not look like a crash.** An expired key makes LangSmith's uploader emit a
+  `Failed to multipart ingest runs ... 403` line per batch — 21 from a single probe. Those
+  loggers are muted, so the agent answers normally and stderr stays clean.
+- **Spans are not free.** LangSmith's own cost 84 µs each, which is half a BM25 query, so
+  `track()` checks whether tracing is on before building one — measured at 2 µs when off.
+
+**Cost is the real billed figure**, not an estimate. OpenRouter reports it in `usage.cost` when
+the request asks; `langchain_openai` drops the field, so `ChatOpenRouter` rescues it the same way
+it already rescues reasoning. Hosted tools can only estimate from a price table that may not list
+this model.
+
 ## Diagrams and equations
 
 Papers are full of things prose is bad at — pipelines, architectures, training stages, the

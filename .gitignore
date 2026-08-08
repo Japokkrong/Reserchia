@@ -11,3 +11,8 @@ wheels/
 
 # Secrets
 .env
+
+# Chainlit runtime: session DB and translations it regenerates on start.
+# .chainlit/config.toml is worth keeping; the rest is not.
+.chainlit/translations/
+.files/

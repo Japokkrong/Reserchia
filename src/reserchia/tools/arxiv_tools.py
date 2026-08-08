@@ -36,6 +36,7 @@ from ..arxiv_fulltext import (
     section_index,
     subtree,
 )
+from ..rag import citations
 from ..rag.ingest import ingest_later
 
 _EXAMPLE_CATEGORIES = ("cs.HC", "cs.AI", "cs.LG", "math.CO", "physics.optics")
@@ -392,6 +393,11 @@ def get_arxiv_fulltext(paper_id: PaperIds, section: str | None = None) -> str:
     # again. A failure here is swallowed -- it costs a repeat fetch later, which
     # is not worth interrupting an answer for.
     ingest_later(identifier)
+
+    # Sections read here are what the answer will cite, and library search has
+    # never returned them -- registering them is what lets a first-read answer
+    # have openable citations rather than bare links.
+    citations.remember_sections(identifier, document.title, document.sections)
 
     header = [f"arXiv:{identifier}"]
     if document.title:

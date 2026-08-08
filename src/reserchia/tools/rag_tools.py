@@ -21,7 +21,7 @@ from __future__ import annotations
 from langchain_core.tools import tool
 
 from ..arxiv_client import normalize_id
-from ..rag import store
+from ..rag import citations, store
 from ..rag.search import search_library
 
 MAX_RESULTS = 10
@@ -111,6 +111,9 @@ def search_paper_library(
 
         limit = max(1, min(int(max_results), MAX_RESULTS))
         hits = search_library(query, identifier, limit)
+        # Kept so a UI can turn the citations in the answer back into the
+        # passages they came from.
+        citations.remember(hits)
     except Exception as exc:  # noqa: BLE001 - degrade to the API path
         return _unavailable(exc)
 

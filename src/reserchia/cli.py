@@ -6,15 +6,22 @@ import os
 import sys
 import uuid
 
-from langchain_core.messages import AIMessage, ToolMessage
 from langgraph.checkpoint.memory import InMemorySaver
 
 from .agent import build_app
 from .config import ConfigError, get_settings
-from .llm import reasoning_text
 from .rag import ingest
 from .rag.store import count as rag_count
 from .tools.rag_tools import list_paper_library
+from .turn import (
+    Reasoning,
+    StreamState,
+    Token,
+    ToolCall,
+    ToolResult,
+    Usage,
+    interpret,
+)
 
 #: How long to let a background paper indexing finish on the way out. Ingests
 #: are a couple of API calls; killing one mid-write leaves a half-indexed paper.
@@ -37,76 +44,6 @@ def cyan(text: str) -> str:
 
 def red(text: str) -> str:
     return _paint(text, "31")
-
-
-def _format_call(call: dict) -> str:
-    args = ", ".join(f"{k}={v!r}" for k, v in (call.get("args") or {}).items())
-    return f"{call.get('name')}({args})"
-
-
-class Usage:
-    """Token accounting for one turn, and for the session.
-
-    A ReAct turn is several model calls, not one -- the model is re-invoked
-    after every tool result, and `MessagesState` resends the whole conversation
-    each time. So per-turn input tokens grow with the conversation, which is
-    exactly the thing worth being able to see.
-    """
-
-    def __init__(self) -> None:
-        self.turns = 0
-        self.session_total = 0
-        self._reset()
-
-    def _reset(self) -> None:
-        self.calls = 0
-        self.input = 0
-        self.output = 0
-        self.cached = 0
-        self.reasoning = 0
-        self.embed_start = _embedding_tokens()
-
-    def start_turn(self) -> None:
-        self._reset()
-
-    def record(self, metadata: dict | None) -> None:
-        if not metadata:
-            return
-        self.calls += 1
-        self.input += metadata.get("input_tokens", 0) or 0
-        self.output += metadata.get("output_tokens", 0) or 0
-        self.cached += (metadata.get("input_token_details") or {}).get("cache_read", 0) or 0
-        self.reasoning += (metadata.get("output_token_details") or {}).get("reasoning", 0) or 0
-
-    @property
-    def embedded(self) -> int:
-        # Includes background indexing that finished during this turn.
-        return max(0, _embedding_tokens() - self.embed_start)
-
-    def summary(self) -> str:
-        total = self.input + self.output + self.embedded
-        self.turns += 1
-        self.session_total += total
-
-        parts = [
-            f"{self.calls} call{'s' if self.calls != 1 else ''}",
-            f"in {self.input:,}" + (f" ({self.cached:,} cached)" if self.cached else ""),
-            f"out {self.output:,}" + (f" ({self.reasoning:,} thinking)" if self.reasoning else ""),
-        ]
-        if self.embedded:
-            parts.append(f"embed {self.embedded:,}")
-        parts.append(f"turn {total:,}")
-        parts.append(f"session {self.session_total:,}")
-        return "  [tokens] " + " · ".join(parts)
-
-
-def _embedding_tokens() -> int:
-    try:
-        from .rag.embeddings import tokens_used
-
-        return tokens_used()
-    except Exception:  # noqa: BLE001 - accounting must never break a turn
-        return 0
 
 
 def _format_result(text: str, limit: int = 6) -> str:
@@ -146,9 +83,9 @@ class Printer:
             print(dim("  [thinking]"))
         print(dim(text), end="", flush=True)
 
-    def tool_call(self, call: dict) -> None:
+    def tool_call(self, call: ToolCall) -> None:
         self._switch("tool")
-        print(cyan(f"  [tool] {_format_call(call)}"))
+        print(cyan(f"  [tool] {call.signature()}"))
 
     def tool_result(self, text: str) -> None:
         self._switch("tool")
@@ -164,7 +101,7 @@ class Printer:
 def _run_turn(app, question: str, config: dict, usage: Usage) -> None:
     print()
     printer = Printer()
-    seen_calls: set[str] = set()
+    state = StreamState()
     usage.start_turn()
 
     for mode, payload in app.stream(
@@ -172,34 +109,18 @@ def _run_turn(app, question: str, config: dict, usage: Usage) -> None:
         config=config,
         stream_mode=["updates", "messages"],
     ):
-        if mode == "messages":
-            chunk, meta = payload
-            # Tool results stream through here too; they are rendered from the
-            # "updates" branch below, so only the model's own output is taken.
-            if (meta or {}).get("langgraph_node") != "agent":
-                continue
-            reasoning = reasoning_text(getattr(chunk, "additional_kwargs", {}))
-            if reasoning:
-                printer.thought(reasoning)
-            if isinstance(chunk.content, str) and chunk.content:
-                printer.token(chunk.content)
-
-        elif mode == "updates":
-            for node, update in (payload or {}).items():
-                for message in (update or {}).get("messages", []):
-                    if node == "agent" and isinstance(message, AIMessage):
-                        # One entry per model call; the loop makes several.
-                        usage.record(message.usage_metadata)
-                        for call in message.tool_calls or []:
-                            key = call.get("id") or _format_call(call)
-                            if key not in seen_calls:
-                                seen_calls.add(key)
-                                printer.tool_call(call)
-                    elif isinstance(message, ToolMessage):
-                        printer.tool_result(str(message.content))
+        for event in interpret(mode, payload, state, usage):
+            if isinstance(event, Reasoning):
+                printer.thought(event.text)
+            elif isinstance(event, Token):
+                printer.token(event.text)
+            elif isinstance(event, ToolCall):
+                printer.tool_call(event)
+            elif isinstance(event, ToolResult):
+                printer.tool_result(event.content)
 
     printer.finish()
-    print(dim(usage.summary()) + "\n")
+    print(dim("  [tokens] " + usage.finish_turn()) + "\n")
 
 
 def _shutdown() -> None:

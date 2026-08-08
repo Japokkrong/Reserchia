@@ -61,6 +61,42 @@ Counts come from the provider's own `usage` field, not an estimate. Cost is not 
 reports it, but `langchain_openai` discards the field before it reaches us — the same class of
 gap that `llm.py` works around for reasoning.
 
+## Web UI
+
+A second front end over the same agent and the same library:
+
+```bash
+uv sync --group ui
+uv run reserchia-ui          # or: chainlit run ui/app.py
+```
+
+![Chainlit UI](docs/chainlit-ui.png)
+
+- **Citations are clickable** — `arXiv:2404.16130 §3.1` opens the passage the claim came from,
+  with its section heading and relevance score.
+- **Tool calls are collapsible steps** showing the JSON arguments and the result.
+- **Token usage** sits under each answer, the same fields as the CLI.
+
+Both UIs share `turn.py`, so neither has its own opinion about what the graph's event stream
+means — the rules for it (tool results also arrive on the `messages` channel, tool calls repeat
+across chunks, usage arrives once per model call) live in one place.
+
+### The one fragile thing: how citations become clickable
+
+Chainlit's `prepareContent` scans a finished message for **element names as plain text** and
+wraps each occurrence in a link itself. So `ui/app.py` names each element after *the model's own
+citation wording* and then emits that wording **bare** — no markdown link. Writing your own link
+makes Chainlit rewrite the text inside it and the page shows a literal `](`.
+
+Unresolved citations are the opposite case: no element exists, so they get a real markdown link
+to the abstract page and Chainlit leaves them alone. Same code path, two behaviours, and a
+citation is never a dead end.
+
+Passages come from `rag/citations.py`, fed by both `search_paper_library` **and**
+`get_arxiv_fulltext`. The second matters more than it looks: the first answer about any paper is
+written from full text, so without registering those sections the answers most worth checking
+would be exactly the ones whose citations could not be opened.
+
 ## The graph
 
 A ReAct loop wired explicitly in `agent.py` — `agent` calls the model, `tools_condition`

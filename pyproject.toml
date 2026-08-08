@@ -16,6 +16,7 @@ dependencies = [
 
 [project.scripts]
 reserchia = "reserchia.cli:main"
+reserchia-ui = "reserchia.ui_runner:main"
 
 [build-system]
 requires = ["uv_build>=0.11.16,<0.12.0"]
@@ -29,4 +30,7 @@ eda = [
     "pandas>=3.0.5",
     "rank-bm25>=0.2.2",
     "tokenizers>=0.23.1",
+]
+ui = [
+    "chainlit>=2.11.1",
 ]

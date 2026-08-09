@@ -42,7 +42,21 @@ services:
     environment:
       RUSTFS_VOLUMES: /data
       RUSTFS_ADDRESS: 0.0.0.0:9000
-      RUSTFS_CONSOLE_ENABLE: "false"
+      # RustFS has a built-in object browser -- no extra container needed to
+      # look inside the bucket. Off by default: it is beta software and the
+      # fewer listeners the better. Set RUSTFS_CONSOLE_ENABLE=true in .env and
+      # `docker compose up -d rustfs` to get it at
+      #
+      #     http://localhost:19001/rustfs/console/
+      #
+      # The path matters: the console is mounted under /rustfs/console/, and the
+      # root of that port answers 403 because it is still the S3 handler
+      # replying to an unsigned ListBuckets. A 403 there means the console is
+      # running and you are at the wrong URL, not that it failed to start.
+      RUSTFS_CONSOLE_ENABLE: ${RUSTFS_CONSOLE_ENABLE:-false}
+      # Defaults to :9001, but that binds inside the container only if it is
+      # spelled out -- an unset address is not the same as 0.0.0.0 here.
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
       RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:?set RUSTFS_ACCESS_KEY in .env}
       RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY:?set RUSTFS_SECRET_KEY in .env}
     volumes:
@@ -53,6 +67,10 @@ services:
       # not read back -- `rustfs` resolves on the compose network only, so the
       # browser gets ERR_NAME_NOT_RESOLVED. Localhost-only, like the app.
       - "127.0.0.1:19000:9000"
+      # The console. Mapped unconditionally; with the console disabled nothing
+      # listens behind it and the port simply refuses, which is a clearer
+      # failure than a port that appears and disappears with a variable.
+      - "127.0.0.1:19001:9001"
     healthcheck:
       # /health, not / -- the root is S3 ListBuckets, which answers 403 without
       # a signed request, and `curl -f` treats that as a failure. Probed: /
@@ -95,6 +113,38 @@ services:
       # The existing library, shared with the host CLI: papers indexed either way
       # are visible to both.
       - ${HOME}/.local/share/reserchia:/data
+
+  # --- inspection, opt-in -----------------------------------------------------
+  # Not part of the stack that runs day to day:
+  #
+  #   docker compose --profile tools up -d      start it
+  #   docker compose stop pgweb                 stop it, and keep it stopped
+  #                                             across reboots
+  #
+  # `profiles` keeps it out of a plain `up`, but once started it carries the
+  # same restart policy as everything else and will come back at boot. Stopping
+  # it explicitly is what takes it out of the boot set.
+  pgweb:
+    # Postgres-only browser: 69 MB against pgAdmin's ~700, and it connects from
+    # a flag instead of asking you to register a server on every fresh volume.
+    image: sosedoff/pgweb:0.17.0
+    profiles: ["tools"]
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command:
+      - --url=postgres://${POSTGRES_USER:-reserchia}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-reserchia}?sslmode=disable
+      # Its default is `localhost`, which inside a container means the published
+      # port maps to a listener nothing outside can reach: the page just hangs.
+      - --bind=0.0.0.0
+      - --listen=8081
+      # There is no browser in here to open.
+      - --skip-open
+      # Add --readonly if you would rather not be able to write to the chat
+      # tables from a browser tab.
+    ports:
+      - "127.0.0.1:18081:8081"
 
 volumes:
   pgdata:

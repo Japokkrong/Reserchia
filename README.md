@@ -134,6 +134,32 @@ docker compose down             # stop, keep data
 docker compose down -v          # stop and delete threads + files
 ```
 
+<details>
+<summary><b>Looking inside the databases</b></summary>
+
+Neither browser runs by default, so nothing extra is listening unless you ask for it.
+
+**Postgres** — [pgweb](https://github.com/sosedoff/pgweb) is defined under a `tools` profile,
+already pointed at the right database:
+
+```bash
+docker compose --profile tools up -d    # http://localhost:18081
+docker compose stop pgweb               # and it stays stopped across reboots
+```
+
+**RustFS** — no extra container needed; it has its own object browser. Set
+`RUSTFS_CONSOLE_ENABLE=true` in `.env`, then:
+
+```bash
+docker compose up -d rustfs             # http://localhost:19001/rustfs/console/
+```
+
+Sign in with `RUSTFS_ACCESS_KEY` / `RUSTFS_SECRET_KEY`. Mind the path — the root of that port
+is still the S3 API and answers `403` to an unsigned request, which looks like a failed console
+but is not one.
+
+</details>
+
 > [!IMPORTANT]
 > The app is published on `127.0.0.1` and authentication is passwordless — the loopback binding
 > is the only thing keeping it off your network. Changing the port mapping to `"18000:8000"`
